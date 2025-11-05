@@ -187,3 +187,32 @@ body {
   color: #000;
   box-shadow: 0 0 20px #0f0;
 }
+
+/* Pause Menu */
+#pause-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#pause-menu .pause-content {
+  text-align: center;
+}
+
+#pause-menu button {
+  margin: 10px;
+  display: block;
+  width: 200px;
+}
+
+.hidden {
+  display: none !important;
+}

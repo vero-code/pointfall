@@ -42,6 +42,10 @@ const dialogueBox = document.getElementById('dialogue-box');
 const dialogueSpeaker = document.getElementById('dialogue-speaker');
 const dialogueText = document.getElementById('dialogue-text');
 const interactionPrompt = document.getElementById('interaction-prompt');
+const pauseMenu = document.getElementById('pause-menu');
+const resumeButton = document.getElementById('resume-button');
+const restartButton = document.getElementById('restart-button');
+const crosshair = document.getElementById('crosshair');
 
 // Initialize
 init();
@@ -67,6 +71,17 @@ function init() {
   
   // Controls
   controls = new PointerLockControls(camera, document.body);
+
+  // Pause menu
+  controls.addEventListener('unlock', () => {
+    pauseMenu.classList.remove('hidden');
+    crosshair.classList.add('hidden');
+  });
+
+  controls.addEventListener('lock', () => {
+    pauseMenu.classList.add('hidden');
+    crosshair.classList.remove('hidden');
+  });
   
   // Click to start
   document.querySelector('.start-button').addEventListener('click', () => {
@@ -206,6 +221,16 @@ function setupInput() {
   // Close dialogue
   dialogueBox.addEventListener('click', () => {
     dialogueBox.classList.remove('active');
+  });
+
+  // Resume button
+  resumeButton.addEventListener('click', () => {
+    controls.lock();
+  });
+
+  // Restart button
+  restartButton.addEventListener('click', () => {
+    location.reload();
   });
 }
 
