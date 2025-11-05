@@ -36,6 +36,7 @@ let direction = new THREE.Vector3();
 let interactables = [];
 let currentInteractable = null;
 let raycaster = new THREE.Raycaster();
+const textureLoader = new THREE.TextureLoader();
 
 // UI Elements
 const dialogueBox = document.getElementById('dialogue-box');
@@ -101,10 +102,24 @@ function init() {
 }
 
 function createCrashedMetro() {
-  // Floor (actually ceiling of upside-down car)
+  // --- Load textures ---
+  const floorTexture = textureLoader.load('/textures/floor.jpg');
+  const wallTexture = textureLoader.load('/textures/wall.jpg');
+
+  // Repeat texture
+  floorTexture.wrapS = THREE.RepeatWrapping;
+  floorTexture.wrapT = THREE.RepeatWrapping;
+  // (4m wide, 12m long)
+  floorTexture.repeat.set(2, 6);
+
+  wallTexture.wrapS = THREE.RepeatWrapping;
+  wallTexture.wrapT = THREE.RepeatWrapping;
+  wallTexture.repeat.set(4, 1);
+
+  // Floor
   const floorGeometry = new THREE.PlaneGeometry(4, 12);
   const floorMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x2a2a2a,
+    map: floorTexture,
     roughness: 0.8,
     metalness: 0.2 
   });
@@ -115,7 +130,7 @@ function createCrashedMetro() {
   
   // Walls
   const wallMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x1a1a1a,
+    map: wallTexture,
     roughness: 0.9 
   });
   
@@ -170,7 +185,7 @@ function createCrashedMetro() {
   }, 100);
   
   // Ambient light
-  const ambientLight = new THREE.AmbientLight(0x404040, 0.2);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
   scene.add(ambientLight);
 }
 
