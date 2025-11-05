@@ -1,96 +1,189 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
+  background: #000;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+#game-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
 }
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+#ui-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #f7df1eaa);
+#crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
 }
 
-.card {
-  padding: 2em;
+#crosshair::before,
+#crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.6);
 }
 
-.read-the-docs {
-  color: #888;
+#crosshair::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  transform: translateY(-50%);
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+#crosshair::after {
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+#hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #0f0;
+  font-size: 14px;
+  text-shadow: 0 0 5px #0f0;
+}
+
+#objective {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 15px;
+  border-left: 3px solid #0f0;
+  color: #fff;
+  max-width: 250px;
+  font-size: 13px;
+}
+
+.objective-title {
+  color: #0f0;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+#interaction-prompt {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: #0f0;
+  padding: 10px 20px;
+  border: 2px solid #0f0;
+  display: none;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+#interaction-prompt.active {
+  display: block;
+}
+
+#dialogue-box {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid #0f0;
+  padding: 20px;
+  max-width: 600px;
+  color: #fff;
+  display: none;
+  pointer-events: auto;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+#dialogue-box.active {
+  display: block;
+}
+
+.dialogue-speaker {
+  color: #0f0;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.dialogue-text {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+#start-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+#start-screen.hidden {
+  display: none;
+}
+
+.title {
+  font-size: 72px;
+  color: #fff;
+  margin-bottom: 20px;
+  text-shadow: 0 0 30px #0f0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.subtitle {
+  font-size: 20px;
+  color: #888;
+  margin-bottom: 50px;
+}
+
+.start-button {
+  padding: 15px 40px;
+  font-size: 18px;
+  background: transparent;
+  border: 2px solid #0f0;
+  color: #0f0;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Courier New', monospace;
+}
+
+.start-button:hover {
+  background: #0f0;
+  color: #000;
+  box-shadow: 0 0 20px #0f0;
 }

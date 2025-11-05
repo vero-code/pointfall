@@ -1,13 +1,43 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pointfall</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POINTFALL</title>
+</head>
+<body>
+  <!-- Start Screen -->
+  <div id="start-screen">
+    <h1 class="title">POINTFALL</h1>
+    <p class="subtitle">"Something went wrong..."</p>
+    <button class="start-button">CLICK TO START</button>
+  </div>
+  
+  <!-- Game Canvas -->
+  <canvas id="game-canvas"></canvas>
+  
+  <!-- UI -->
+  <div id="ui-overlay">
+    <div id="crosshair"></div>
+    
+    <div id="hud">
+      <div>Health: <span id="health">100</span>%</div>
+    </div>
+    
+    <div id="objective">
+      <div class="objective-title">OBJECTIVE:</div>
+      <div>Explore the crashed metro car<br>Talk to survivors</div>
+    </div>
+    
+    <div id="interaction-prompt">[E] Talk</div>
+    
+    <div id="dialogue-box">
+      <div class="dialogue-speaker" id="dialogue-speaker"></div>
+      <div class="dialogue-text" id="dialogue-text"></div>
+      <div style="margin-top: 10px; font-size: 12px; color: #888;">Click to close</div>
+    </div>
+  </div>
+  
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>
