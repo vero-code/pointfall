@@ -127,6 +127,12 @@ function createCrashedMetro() {
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
+
+  // Ceiling
+  const ceiling = new THREE.Mesh(floorGeometry, floorMaterial);
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = 3;
+  scene.add(ceiling);
   
   // Walls
   const wallMaterial = new THREE.MeshStandardMaterial({ 
@@ -154,6 +160,11 @@ function createCrashedMetro() {
   );
   backWall.position.set(0, 1.5, -6);
   scene.add(backWall);
+
+  // Front wall
+  const frontWall = backWall.clone();
+  frontWall.position.z = 6;
+  scene.add(frontWall);
   
   // Debris
   for (let i = 0; i < 10; i++) {
@@ -178,11 +189,13 @@ function createCrashedMetro() {
   const light = new THREE.PointLight(0x00ff00, 0.5, 10);
   light.position.set(0, 2.5, 0);
   scene.add(light);
+
+  light.intensity = 0.4;
   
   // Flicker effect
-  setInterval(() => {
-    light.intensity = Math.random() > 0.3 ? 0.5 : 0.1;
-  }, 100);
+  // setInterval(() => {
+  //   light.intensity = Math.random() > 0.3 ? 0.5 : 0.1;
+  // }, 100);
   
   // Ambient light
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
