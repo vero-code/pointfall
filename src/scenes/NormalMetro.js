@@ -1,5 +1,6 @@
 // src/scenes/NormalMetro.js
 import * as THREE from 'three';
+import { CharacterBuilder } from '../utils/CharacterBuilder.js';
 
 export class NormalMetro {
   constructor(scene, textureLoader) {
@@ -120,18 +121,67 @@ export class NormalMetro {
   
   createSurvivors() {
     const survivorsData = [
-      { name: 'axton', pos: [-1.3, 1.0, -2], color: 0x4a90e2, standing: true },
-      { name: 'martha', pos: [-1.5, 0.6, -4], color: 0xe24a4a, standing: false },
-      { name: 'gladwin', pos: [-1.5, 0.6, -2.5], color: 0x8a8a8a, standing: false },
-      { name: 'david', pos: [1.5, 0.6, -3], color: 0x6a4a8a, standing: false },
-      { name: 'volt', pos: [1.5, 0.6, -1.5], color: 0xf4a460, standing: false },
-      { name: 'maya', pos: [1.3, 1.0, 1], color: 0x4ae2a8, standing: true }
+      { 
+        name: 'axton', 
+        pos: [-1.3, 0, -2], 
+        color: 0x4a90e2, 
+        type: 'standing'
+      },
+      { 
+        name: 'martha', 
+        pos: [-1.5, 0, -4], 
+        color: 0xe24a4a, 
+        type: 'sitting',
+        elderly: true
+      },
+      { 
+        name: 'gladwin', 
+        pos: [-1.5, 0, -2.5], 
+        color: 0x8a8a8a, 
+        type: 'sitting',
+        elderly: true
+      },
+      { 
+        name: 'david', 
+        pos: [1.5, 0, -3], 
+        color: 0x6a4a8a, 
+        type: 'sitting'
+      },
+      { 
+        name: 'volt', 
+        pos: [1.5, 0, -1.5], 
+        color: 0xf4a460, 
+        type: 'sitting',
+        child: true
+      },
+      { 
+        name: 'maya', 
+        pos: [1.3, 0, 1], 
+        color: 0x4ae2a8, 
+        type: 'standing'
+      }
     ];
     
     survivorsData.forEach(data => {
-      const geometry = new THREE.CapsuleGeometry(0.3, 0.8, 4, 8);
-      const material = new THREE.MeshStandardMaterial({ color: data.color });
-      const survivor = new THREE.Mesh(geometry, material);
+      let survivor;
+      
+      if (data.type === 'sitting') {
+        if (data.child) {
+          survivor = CharacterBuilder.createSittingHuman(data.color, 0.6);
+        } else if (data.elderly) {
+          survivor = CharacterBuilder.createSittingHuman(data.color, 0.85);
+        } else {
+          survivor = CharacterBuilder.createSittingHuman(data.color, 1);
+        }
+      } else {
+        // Standing
+        if (data.elderly) {
+          survivor = CharacterBuilder.createElderly(data.color);
+        } else {
+          survivor = CharacterBuilder.createHuman(data.color);
+        }
+      }
+      
       survivor.position.set(...data.pos);
       survivor.userData.dialogue = data.name;
       survivor.userData.isInteractable = true;
@@ -140,16 +190,11 @@ export class NormalMetro {
     });
     
     // Volt's astronaut toy
-    const toyGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.15);
-    const toyMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xeeeeee,
-      emissive: 0xffffff,
-      emissiveIntensity: 0.2
-    });
-    const toy = new THREE.Mesh(toyGeometry, toyMaterial);
-    toy.position.set(1.5, 0.8, -1.5);
+    const toy = CharacterBuilder.createAstronaut(0.12);
+    toy.position.set(1.5, 0.5, -1.5);
     toy.userData.isToy = true;
     toy.userData.isInteractable = true;
+    toy.userData.dialogue = 'volt';
     this.scene.add(toy);
   }
   

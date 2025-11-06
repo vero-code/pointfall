@@ -1,5 +1,6 @@
 // src/scenes/CrashedMetro.js
 import * as THREE from 'three';
+import { CharacterBuilder } from '../utils/CharacterBuilder.js';
 
 export class CrashedMetro {
   constructor(scene, textureLoader) {
@@ -104,20 +105,74 @@ export class CrashedMetro {
   
   createSurvivors() {
     const survivorsData = [
-      { name: 'axton', pos: [-1.5, 0.8, -2], color: 0x4a90e2 },
-      { name: 'martha', pos: [-1.2, 0.5, -4], color: 0xe24a4a },
-      { name: 'gladwin', pos: [-0.8, 0.5, -4], color: 0x8a8a8a },
-      { name: 'david', pos: [1, 0.8, -3], color: 0x6a4a8a },
-      { name: 'volt', pos: [1.2, 0.3, -2.5], color: 0xf4a460 },
-      { name: 'maya', pos: [1.5, 0.5, 1], color: 0x4ae2a8 }
+      { 
+        name: 'axton', 
+        pos: [-1.5, 0.4, -2], 
+        color: 0x4a90e2, 
+        type: 'sitting' 
+      },
+      { 
+        name: 'martha', 
+        pos: [-1.2, 0.4, -4], 
+        color: 0xe24a4a, 
+        type: 'sitting',
+        elderly: true
+      },
+      { 
+        name: 'gladwin', 
+        pos: [-0.8, 0.4, -4], 
+        color: 0x8a8a8a, 
+        type: 'sitting',
+        elderly: true
+      },
+      { 
+        name: 'david', 
+        pos: [1, 0.4, -3], 
+        color: 0x6a4a8a, 
+        type: 'standing'
+      },
+      { 
+        name: 'volt', 
+        pos: [1.2, 0.15, -2.5], 
+        color: 0xf4a460, 
+        type: 'injured',
+        child: true
+      },
+      { 
+        name: 'maya', 
+        pos: [1.5, 0.3, 1], 
+        color: 0x4ae2a8, 
+        type: 'sitting'
+      }
     ];
     
     survivorsData.forEach(data => {
-      const geometry = new THREE.CapsuleGeometry(0.3, 0.8, 4, 8);
-      const material = new THREE.MeshStandardMaterial({ color: data.color });
-      const survivor = new THREE.Mesh(geometry, material);
+      let survivor;
+      
+      if (data.type === 'injured') {
+        if (data.child) {
+          survivor = CharacterBuilder.createInjuredHuman(data.color);
+          survivor.scale.set(0.6, 0.6, 0.6);
+        } else {
+          survivor = CharacterBuilder.createInjuredHuman(data.color);
+        }
+      } else if (data.type === 'sitting') {
+        const scale = data.child ? 0.6 : data.elderly ? 0.85 : 1;
+        survivor = CharacterBuilder.createSittingHuman(data.color, scale);
+        // Add injury tilt
+        survivor.rotation.z = (Math.random() - 0.5) * 0.3;
+      } else {
+        // Standing but injured
+        if (data.elderly) {
+          survivor = CharacterBuilder.createElderly(data.color);
+        } else {
+          survivor = CharacterBuilder.createHuman(data.color);
+        }
+        // Slight lean
+        survivor.rotation.x = Math.random() * 0.2 - 0.1;
+      }
+      
       survivor.position.set(...data.pos);
-      survivor.rotation.x = Math.random() * 0.5 - 0.25; // Slight tilt
       survivor.userData.dialogue = data.name;
       survivor.userData.isInteractable = true;
       this.scene.add(survivor);
@@ -125,12 +180,7 @@ export class CrashedMetro {
     });
     
     // Volt's astronaut toy (dropped on floor)
-    const toyGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.15);
-    const toyMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xcccccc,
-      roughness: 0.8
-    });
-    const toy = new THREE.Mesh(toyGeometry, toyMaterial);
+    const toy = CharacterBuilder.createAstronaut(0.12);
     toy.position.set(0.5, 0.08, -1.5);
     toy.rotation.set(Math.PI / 2, 0, Math.random() * Math.PI);
     toy.userData.isToy = true;
@@ -149,9 +199,9 @@ export class CrashedMetro {
     light.intensity = 0.4;
     
     // Flicker effect
-    setInterval(() => {
-      light.intensity = Math.random() > 0.3 ? 0.5 : 0.1;
-    }, 100);
+    // setInterval(() => {
+    //   light.intensity = Math.random() > 0.3 ? 0.5 : 0.1;
+    // }, 100);
 
     // Ambient (dark)
     const ambientLight = new THREE.AmbientLight(0x404040, 0.3);

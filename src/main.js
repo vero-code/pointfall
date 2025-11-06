@@ -274,8 +274,6 @@ function animate() {
 }
 
 function transitionToCrashed() {
-  controls.unlock();
-  
   const overlay = document.createElement('div');
   overlay.style.cssText = `
     position: fixed;
@@ -295,7 +293,6 @@ function transitionToCrashed() {
   
   setTimeout(() => {
     loadCrashedScene();
-    controls.lock();
     overlay.style.opacity = '0';
     setTimeout(() => overlay.remove(), 2000);
   }, 2000);
