@@ -7,7 +7,7 @@
 </head>
 <body>
   <!-- Start Screen -->
-  <div id="start-screen">
+  <div id="start-screen" class="hidden">
     <h1 class="title">POINTFALL</h1>
     <p class="subtitle">"Something went wrong..."</p>
     <button class="start-button">CLICK TO START</button>
@@ -35,6 +35,19 @@
       <div class="dialogue-speaker" id="dialogue-speaker"></div>
       <div class="dialogue-text" id="dialogue-text"></div>
       <div style="margin-top: 10px; font-size: 12px; color: #888;">Click to close</div>
+    </div>
+
+    <div id="debug-controls" style="
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    ">
+      <button id="load-normal" class="debug-button">Load Normal</button>
+      <button id="load-crashed" class="debug-button">Load Crashed</button>
+      <button id="toggle-auto" class="debug-button">Auto: ON</button>
     </div>
   </div>
 

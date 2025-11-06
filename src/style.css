@@ -195,7 +195,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  /* background: rgba(0, 0, 0, 0.75); */
   z-index: 100;
   display: flex;
   justify-content: center;
@@ -215,4 +215,27 @@ body {
 
 .hidden {
   display: none !important;
+}
+
+/* Debug */
+.debug-button {
+  padding: 8px 16px;
+  background: rgba(0, 255, 0, 0.2);
+  border: 1px solid #0f0;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.3s;
+}
+
+.debug-button:hover {
+  background: rgba(0, 255, 0, 0.4);
+}
+
+.debug-button.off {
+  background: rgba(255, 0, 0, 0.2);
+  border-color: #f00;
+  color: #f00;
 }

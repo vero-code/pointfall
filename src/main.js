@@ -1,34 +1,15 @@
-// src/main.js
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { NormalMetro } from './scenes/NormalMetro.js';
+import { CrashedMetro } from './scenes/CrashedMetro.js';
+import { DIALOGUES } from './data/dialogues.js';
 import './style.css';
-
-// Dialogue data
-const DIALOGUES = {
-  axton: {
-    name: "AXTON",
-    text: "Something broke through the tunnel ceiling. A massive drill. Cut our car loose. We fell... I don't know how far."
-  },
-  martha: {
-    name: "MARTHA", 
-    text: "Oh dear... Harold, are you hurt? We need to stay calm..."
-  },
-  gladwin: {
-    name: "GLADWIN",
-    text: "I'm okay, Martha. We'll get through this together."
-  },
-  david: {
-    name: "DAVID",
-    text: "VOLT! Can you hear me? Please be okay, buddy..."
-  },
-  maya: {
-    name: "MAYA",
-    text: "My leg... it's stuck. I can't move it. Can someone help?"
-  }
-};
 
 // Game state
 let scene, camera, renderer, controls;
+let currentScene = 'normal';
+let sceneTimer = 0;
+const SCENE_DURATION = 30;
 let player = { height: 1.6, speed: 5 };
 let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 let velocity = new THREE.Vector3();
@@ -61,6 +42,7 @@ function init() {
   // Camera
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, player.height, 5);
+  scene.add(camera);
   
   // Renderer
   renderer = new THREE.WebGLRenderer({ 
@@ -83,145 +65,70 @@ function init() {
     pauseMenu.classList.add('hidden');
     crosshair.classList.remove('hidden');
   });
-  
-  // Click to start
-  document.querySelector('.start-button').addEventListener('click', () => {
+
+  renderer.domElement.addEventListener('click', () => {
     controls.lock();
-    document.getElementById('start-screen').classList.add('hidden');
   });
-  
-  // Create scene
-  createCrashedMetro();
-  createSurvivors();
+
+  // Load initial scene
+  loadNormalScene();
   
   // Input
   setupInput();
   
   // Window resize
   window.addEventListener('resize', onWindowResize);
+
+  setupDebugControls();
 }
 
-function createCrashedMetro() {
-  // --- Load textures ---
-  const floorTexture = textureLoader.load('/textures/floor.jpg');
-  const wallTexture = textureLoader.load('/textures/wall.jpg');
-
-  // Repeat texture
-  floorTexture.wrapS = THREE.RepeatWrapping;
-  floorTexture.wrapT = THREE.RepeatWrapping;
-  // (4m wide, 12m long)
-  floorTexture.repeat.set(2, 6);
-
-  wallTexture.wrapS = THREE.RepeatWrapping;
-  wallTexture.wrapT = THREE.RepeatWrapping;
-  wallTexture.repeat.set(4, 1);
-
-  // Floor
-  const floorGeometry = new THREE.PlaneGeometry(4, 12);
-  const floorMaterial = new THREE.MeshStandardMaterial({ 
-    map: floorTexture,
-    roughness: 0.8,
-    metalness: 0.2 
-  });
-  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-  floor.rotation.x = -Math.PI / 2;
-  floor.receiveShadow = true;
-  scene.add(floor);
-
-  // Ceiling
-  const ceiling = new THREE.Mesh(floorGeometry, floorMaterial);
-  ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.y = 3;
-  scene.add(ceiling);
+function loadNormalScene() {
+  clearScene();
+  currentScene = 'normal';
+  sceneTimer = 0;
   
-  // Walls
-  const wallMaterial = new THREE.MeshStandardMaterial({ 
-    map: wallTexture,
-    roughness: 0.9 
-  });
+  const normalMetro = new NormalMetro(scene, textureLoader);
+  normalMetro.create();
+  interactables = normalMetro.getSurvivors();
   
-  // Left wall
-  const leftWall = new THREE.Mesh(
-    new THREE.BoxGeometry(0.1, 3, 12),
-    wallMaterial
-  );
-  leftWall.position.set(-2, 1.5, 0);
-  scene.add(leftWall);
-  
-  // Right wall
-  const rightWall = leftWall.clone();
-  rightWall.position.set(2, 1.5, 0);
-  scene.add(rightWall);
-  
-  // Back wall
-  const backWall = new THREE.Mesh(
-    new THREE.BoxGeometry(4, 3, 0.1),
-    wallMaterial
-  );
-  backWall.position.set(0, 1.5, -6);
-  scene.add(backWall);
-
-  // Front wall
-  const frontWall = backWall.clone();
-  frontWall.position.z = 6;
-  scene.add(frontWall);
-  
-  // Debris
-  for (let i = 0; i < 10; i++) {
-    const debris = new THREE.Mesh(
-      new THREE.BoxGeometry(0.2, 0.1, 0.3),
-      new THREE.MeshStandardMaterial({ color: 0x3a3a3a })
-    );
-    debris.position.set(
-      (Math.random() - 0.5) * 3,
-      0.05,
-      (Math.random() - 0.5) * 10
-    );
-    debris.rotation.set(
-      Math.random() * Math.PI,
-      Math.random() * Math.PI,
-      Math.random() * Math.PI
-    );
-    scene.add(debris);
-  }
-  
-  // Emergency light (flickering)
-  const light = new THREE.PointLight(0x00ff00, 0.5, 10);
-  light.position.set(0, 2.5, 0);
-  scene.add(light);
-
-  light.intensity = 0.4;
-  
-  // Flicker effect
-  // setInterval(() => {
-  //   light.intensity = Math.random() > 0.3 ? 0.5 : 0.1;
-  // }, 100);
-  
-  // Ambient light
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-  scene.add(ambientLight);
+  camera.position.set(0, player.height, 5);
 }
 
-function createSurvivors() {
-  const survivors = [
-    { name: 'axton', pos: [-1.5, 0.8, -2], color: 0x4a90e2 },
-    { name: 'martha', pos: [-1.2, 0.5, -4], color: 0xe24a4a },
-    { name: 'gladwin', pos: [-0.8, 0.5, -4], color: 0x8a8a8a },
-    { name: 'david', pos: [1, 0.8, -3], color: 0x6a4a8a },
-    { name: 'maya', pos: [1.5, 0.5, 1], color: 0x4ae2a8 }
-  ];
+function loadCrashedScene() {
+  clearScene();
+  currentScene = 'crashed';
   
-  survivors.forEach(data => {
-    // Simple capsule for survivor
-    const geometry = new THREE.CapsuleGeometry(0.3, 0.8, 4, 8);
-    const material = new THREE.MeshStandardMaterial({ color: data.color });
-    const survivor = new THREE.Mesh(geometry, material);
-    survivor.position.set(...data.pos);
-    survivor.userData.dialogue = data.name;
-    survivor.userData.isInteractable = true;
-    scene.add(survivor);
-    interactables.push(survivor);
+  scene.fog = new THREE.Fog(0x0a0a0a, 1, 15);
+  scene.background = new THREE.Color(0x000000);
+  
+  const crashedMetro = new CrashedMetro(scene, textureLoader);
+  crashedMetro.create();
+  interactables = crashedMetro.getSurvivors();
+  
+  camera.position.set(0, player.height * 0.5, 5);
+}
+
+function clearScene() {
+  const objectsToRemove = [];
+  scene.children.forEach(child => {
+    if (child !== camera) {
+      objectsToRemove.push(child);
+    }
   });
+  
+  objectsToRemove.forEach(object => {
+    if (object.geometry) object.geometry.dispose();
+    if (object.material) {
+      if (Array.isArray(object.material)) {
+        object.material.forEach(mat => mat.dispose());
+      } else {
+        object.material.dispose();
+      }
+    }
+    scene.remove(object);
+  });
+  
+  interactables = [];
 }
 
 function setupInput() {
@@ -262,9 +169,56 @@ function setupInput() {
   });
 }
 
+function setupDebugControls() {
+  let autoTransition = false;
+  
+  const loadNormalBtn = document.getElementById('load-normal');
+  const loadCrashedBtn = document.getElementById('load-crashed');
+  const toggleAutoBtn = document.getElementById('toggle-auto');
+  
+  if (loadNormalBtn) {
+    loadNormalBtn.addEventListener('click', () => {
+      loadNormalScene();
+      if (controls.isLocked === false) {
+        controls.lock();
+      }
+    });
+  }
+  
+  if (loadCrashedBtn) {
+    loadCrashedBtn.addEventListener('click', () => {
+      loadCrashedScene();
+      if (controls.isLocked === false) {
+        controls.lock();
+      }
+    });
+  }
+  
+  if (toggleAutoBtn) {
+    toggleAutoBtn.textContent = 'Auto: OFF';
+    toggleAutoBtn.classList.add('off');
+    
+    toggleAutoBtn.addEventListener('click', () => {
+      autoTransition = !autoTransition;
+      toggleAutoBtn.textContent = `Auto: ${autoTransition ? 'ON' : 'OFF'}`;
+      toggleAutoBtn.classList.toggle('off', !autoTransition);
+    });
+  }
+  
+  // Expose to animate function
+  window.autoTransition = autoTransition;
+  
+  // Update getter
+  Object.defineProperty(window, 'autoTransition', {
+    get: () => autoTransition,
+    set: (val) => autoTransition = val
+  });
+}
+
 function interact(object) {
   const dialogueKey = object.userData.dialogue;
-  const dialogue = DIALOGUES[dialogueKey];
+  const dialogueSet = currentScene === 'normal' ? DIALOGUES.normal : DIALOGUES.crashed;
+  const dialogue = dialogueSet[dialogueKey];
   
   if (dialogue) {
     dialogueSpeaker.textContent = dialogue.name;
@@ -290,9 +244,16 @@ function animate() {
   requestAnimationFrame(animate);
   
   if (controls.isLocked) {
-    const delta = 0.016; // ~60fps
+    const delta = 0.016;
+
+    if (currentScene === 'normal' && window.autoTransition) {
+      sceneTimer += delta;
+      if (sceneTimer >= SCENE_DURATION) {
+        transitionToCrashed();
+        return;
+      }
+    }
     
-    // Movement
     velocity.x -= velocity.x * 10.0 * delta;
     velocity.z -= velocity.z * 10.0 * delta;
     
@@ -306,11 +267,38 @@ function animate() {
     controls.moveRight(-velocity.x * delta);
     controls.moveForward(-velocity.z * delta);
     
-    // Check interactions
     checkInteractions();
   }
   
   renderer.render(scene, camera);
+}
+
+function transitionToCrashed() {
+  controls.unlock();
+  
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 2s;
+    pointer-events: none;
+  `;
+  document.body.appendChild(overlay);
+  
+  setTimeout(() => overlay.style.opacity = '1', 50);
+  
+  setTimeout(() => {
+    loadCrashedScene();
+    controls.lock();
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 2000);
+  }, 2000);
 }
 
 function onWindowResize() {
