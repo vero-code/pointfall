@@ -88,18 +88,15 @@ function init() {
   // Window resize
   window.addEventListener('resize', onWindowResize);
 
-  setupDebugControls();
+  // setupDebugControls();
 }
 
 function loadNormalScene() {
   clearScene();
   currentScene = 'normal';
   sceneTimer = 0;
-  
   const normalMetro = new NormalMetro(scene, textureLoader);
   normalMetro.create();
-  interactables = normalMetro.getSurvivors();
-
   normalMetro.update = (delta) => {}; 
   activeScene = normalMetro;
   camera.position.set(0, player.height, 5);
@@ -108,15 +105,11 @@ function loadNormalScene() {
 function loadCrashedScene() {
   clearScene();
   currentScene = 'crashed';
-  
   scene.fog = new THREE.Fog(0x0a0a0a, 1, 15);
   scene.background = new THREE.Color(0x000000);
-  
   const crashedMetro = new CrashedMetro(scene, textureLoader);
   crashedMetro.create();
-  interactables = crashedMetro.getSurvivors();
   activeScene = crashedMetro;
-
   camera.position.set(0, player.height, 5);
 }
 
@@ -151,7 +144,13 @@ function setupInput() {
       case 'KeyA': moveLeft = true; break;
       case 'KeyD': moveRight = true; break;
       case 'KeyE': 
-        if (currentInteractable) interact(currentInteractable);
+        console.log("--- The E key is pressed ---"); 
+        if (currentInteractable) {
+          console.log("Successful interaction with:", currentInteractable.userData.dialogue);
+          interact(currentInteractable);
+        } else {
+          console.log("Interaction failed: currentInteractable = null");
+        }
         break;
     }
   });
@@ -240,13 +239,41 @@ function interact(object) {
 }
 
 function checkInteractions() {
+  if (!activeScene || !activeScene.getSurvivors) {
+    console.error("ERROR: activeScene or getSurvivors() not found!");
+    return;
+  }
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-  const intersects = raycaster.intersectObjects(interactables);
   
+  const survivorsList = activeScene.getSurvivors();
+  if (survivorsList.length === 0) {
+    return;
+  }
+
+  const intersects = raycaster.intersectObjects(survivorsList, true);
+  let foundInteractable = null;
+
   if (intersects.length > 0 && intersects[0].distance < 2) {
-    currentInteractable = intersects[0].object;
+    let object = intersects[0].object;
+    while (object) {
+      if (object.userData.isInteractable) {
+        foundInteractable = object;
+        break; 
+      }
+      object = object.parent;
+    }
+  }
+
+  if (foundInteractable) {
+    if (currentInteractable !== foundInteractable) {
+      console.log(`Object:`, foundInteractable.userData.dialogue);
+    }
+    currentInteractable = foundInteractable;
     interactionPrompt.classList.add('active');
   } else {
+    if (currentInteractable !== null) {
+      console.log("Miss.");
+    }
     currentInteractable = null;
     interactionPrompt.classList.remove('active');
   }
