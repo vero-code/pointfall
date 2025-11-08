@@ -1,12 +1,15 @@
 // src/scenes/CrashedMetro.js
 import * as THREE from 'three';
 import { CharacterBuilder } from '../utils/CharacterBuilder.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { survivorsData } from '../data/crashedSurvivorsData.js';
 
 export class CrashedMetro {
   constructor(scene, textureLoader) {
     this.scene = scene;
     this.textureLoader = textureLoader;
     this.survivors = [];
+    this.gltfLoader = new GLTFLoader();
   }
   
   create() {
@@ -104,79 +107,62 @@ export class CrashedMetro {
   }
   
   createSurvivors() {
-    const survivorsData = [
-      { 
-        name: 'axton', 
-        pos: [-1.5, 0.4, -2], 
-        color: 0x4a90e2, 
-        type: 'sitting' 
-      },
-      { 
-        name: 'martha', 
-        pos: [-1.2, 0.4, -4], 
-        color: 0xe24a4a, 
-        type: 'sitting',
-        elderly: true
-      },
-      { 
-        name: 'gladwin', 
-        pos: [-0.8, 0.4, -4], 
-        color: 0x8a8a8a, 
-        type: 'sitting',
-        elderly: true
-      },
-      { 
-        name: 'david', 
-        pos: [1, 0.4, -3], 
-        color: 0x6a4a8a, 
-        type: 'standing'
-      },
-      { 
-        name: 'volt', 
-        pos: [1.2, 0.15, -2.5], 
-        color: 0xf4a460, 
-        type: 'injured',
-        child: true
-      },
-      { 
-        name: 'maya', 
-        pos: [1.5, 0.3, 1], 
-        color: 0x4ae2a8, 
-        type: 'sitting'
-      }
-    ];
-    
     survivorsData.forEach(data => {
-      let survivor;
-      
-      if (data.type === 'injured') {
-        if (data.child) {
-          survivor = CharacterBuilder.createInjuredHuman(data.color);
-          survivor.scale.set(0.6, 0.6, 0.6);
-        } else {
-          survivor = CharacterBuilder.createInjuredHuman(data.color);
-        }
-      } else if (data.type === 'sitting') {
-        const scale = data.child ? 0.6 : data.elderly ? 0.85 : 1;
-        survivor = CharacterBuilder.createSittingHuman(data.color, scale);
-        // Add injury tilt
-        survivor.rotation.z = (Math.random() - 0.5) * 0.3;
+      if (data.type === 'model') {
+        // --- ASYNCHRONOUS MODEL LOADING ---
+        
+        this.gltfLoader.load(data.modelPath, (gltf) => {
+          // This code runs AFTER the model has loaded
+          const survivor = gltf.scene;
+          
+          // Set position, scale, and userData HERE
+          survivor.position.set(...data.pos);
+          
+          // You will need to experiment to find the right scale!
+          const scale = data.scale || 1.0;
+          survivor.scale.set(scale, scale, scale);
+          
+          // Make sure the loaded model casts shadows
+          survivor.traverse((node) => {
+            if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true; // Optional
+            }
+          });
+          
+          survivor.userData.dialogue = data.name;
+          survivor.userData.isInteractable = true;
+          
+          this.scene.add(survivor);
+          this.survivors.push(survivor);
+        });
+        
       } else {
-        // Standing but injured
-        if (data.elderly) {
-          survivor = CharacterBuilder.createElderly(data.color);
-        } else {
-          survivor = CharacterBuilder.createHuman(data.color);
-        }
-        // Slight lean
-        survivor.rotation.x = Math.random() * 0.2 - 0.1;
-      }
+        let survivor;
       
-      survivor.position.set(...data.pos);
-      survivor.userData.dialogue = data.name;
-      survivor.userData.isInteractable = true;
-      this.scene.add(survivor);
-      this.survivors.push(survivor);
+        if (data.type === 'sitting') {
+          if (data.child) {
+            survivor = CharacterBuilder.createSittingHuman(data.color, 0.6);
+          } else if (data.elderly) {
+            survivor = CharacterBuilder.createSittingHuman(data.color, 0.85);
+          } else {
+            survivor = CharacterBuilder.createSittingHuman(data.color, 1);
+          }
+        } else {
+          // Standing
+          if (data.elderly) {
+            survivor = CharacterBuilder.createElderly(data.color);
+          } else {
+            survivor = CharacterBuilder.createHuman(data.color);
+          }
+        }
+        
+        survivor.position.set(...data.pos);
+        survivor.userData.dialogue = data.name;
+        survivor.userData.isInteractable = true;
+        this.scene.add(survivor);
+        this.survivors.push(survivor);
+      }
     });
     
     // Volt's astronaut toy (dropped on floor)
@@ -192,19 +178,37 @@ export class CrashedMetro {
   
   createLighting() {
     // Emergency light (flickering green)
-    const light = new THREE.PointLight(0x00ff00, 0.4, 10);
-    light.position.set(0, 2.5, 0);
-    this.scene.add(light);
+    // const light = new THREE.PointLight(0x00ff00, 1.0, 15);
+    // light.position.set(0, 2.5, 0);
+    // this.scene.add(light);
 
-    light.intensity = 0.4;
+    // light.intensity = 0.4;
     
     // Flicker effect
     // setInterval(() => {
     //   light.intensity = Math.random() > 0.3 ? 0.5 : 0.1;
     // }, 100);
 
-    // Ambient (dark)
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+    // Ambient (background)
+    // const ambientLight = new THREE.AmbientLight(0x808080, 0.8);
+    // this.scene.add(ambientLight);
+
+    // Light for test
+    // Bright ceiling lights (normal metro)
+    const light1 = new THREE.PointLight(0xffffee, 1, 8);
+    light1.position.set(0, 2.8, -3);
+    this.scene.add(light1);
+    
+    const light2 = new THREE.PointLight(0xffffee, 1, 8);
+    light2.position.set(0, 2.8, 0);
+    this.scene.add(light2);
+    
+    const light3 = new THREE.PointLight(0xffffee, 1, 8);
+    light3.position.set(0, 2.8, 3);
+    this.scene.add(light3);
+    
+    // Ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
   }
   

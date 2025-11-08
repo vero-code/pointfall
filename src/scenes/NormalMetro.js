@@ -1,12 +1,14 @@
 // src/scenes/NormalMetro.js
 import * as THREE from 'three';
 import { CharacterBuilder } from '../utils/CharacterBuilder.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class NormalMetro {
   constructor(scene, textureLoader) {
     this.scene = scene;
     this.textureLoader = textureLoader;
     this.survivors = [];
+    this.gltfLoader = new GLTFLoader();
   }
   
   create() {
@@ -135,10 +137,11 @@ export class NormalMetro {
         elderly: true
       },
       { 
-        name: 'gladwin', 
-        pos: [-1.5, 0, -2.5], 
-        color: 0x8a8a8a, 
-        type: 'sitting',
+        name: 'gladwin',
+        pos: [-1.5, 0.6, -2.5],
+        type: 'model',
+        modelPath: '/models/grandpa.glb',
+        scale: 0.4,
         elderly: true
       },
       { 
@@ -163,30 +166,61 @@ export class NormalMetro {
     ];
     
     survivorsData.forEach(data => {
-      let survivor;
-      
-      if (data.type === 'sitting') {
-        if (data.child) {
-          survivor = CharacterBuilder.createSittingHuman(data.color, 0.6);
-        } else if (data.elderly) {
-          survivor = CharacterBuilder.createSittingHuman(data.color, 0.85);
-        } else {
-          survivor = CharacterBuilder.createSittingHuman(data.color, 1);
-        }
+      if (data.type === 'model') {
+        // --- ASYNCHRONOUS MODEL LOADING ---
+        
+        this.gltfLoader.load(data.modelPath, (gltf) => {
+          // This code runs AFTER the model has loaded
+          const survivor = gltf.scene;
+          
+          // Set position, scale, and userData HERE
+          survivor.position.set(...data.pos);
+          
+          // You will need to experiment to find the right scale!
+          const scale = data.scale || 1.0;
+          survivor.scale.set(scale, scale, scale);
+          
+          // Make sure the loaded model casts shadows
+          survivor.traverse((node) => {
+            if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true; // Optional
+            }
+          });
+          
+          survivor.userData.dialogue = data.name;
+          survivor.userData.isInteractable = true;
+          
+          this.scene.add(survivor);
+          this.survivors.push(survivor);
+        });
+        
       } else {
-        // Standing
-        if (data.elderly) {
-          survivor = CharacterBuilder.createElderly(data.color);
-        } else {
-          survivor = CharacterBuilder.createHuman(data.color);
-        }
-      }
+        let survivor;
       
-      survivor.position.set(...data.pos);
-      survivor.userData.dialogue = data.name;
-      survivor.userData.isInteractable = true;
-      this.scene.add(survivor);
-      this.survivors.push(survivor);
+        if (data.type === 'sitting') {
+          if (data.child) {
+            survivor = CharacterBuilder.createSittingHuman(data.color, 0.6);
+          } else if (data.elderly) {
+            survivor = CharacterBuilder.createSittingHuman(data.color, 0.85);
+          } else {
+            survivor = CharacterBuilder.createSittingHuman(data.color, 1);
+          }
+        } else {
+          // Standing
+          if (data.elderly) {
+            survivor = CharacterBuilder.createElderly(data.color);
+          } else {
+            survivor = CharacterBuilder.createHuman(data.color);
+          }
+        }
+        
+        survivor.position.set(...data.pos);
+        survivor.userData.dialogue = data.name;
+        survivor.userData.isInteractable = true;
+        this.scene.add(survivor);
+        this.survivors.push(survivor);
+      }
     });
     
     // Volt's astronaut toy
