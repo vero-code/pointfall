@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { CharacterBuilder } from '../utils/CharacterBuilder.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { survivorsData } from '../data/crashedSurvivorsData.js';
 
 export class CrashedMetro {
@@ -10,6 +11,12 @@ export class CrashedMetro {
     this.textureLoader = textureLoader;
     this.survivors = [];
     this.gltfLoader = new GLTFLoader();
+    this.fbxLoader = new FBXLoader();
+    this.mixers = [];
+  }
+
+  update(delta) {
+    for (const m of this.mixers) m.update(delta);
   }
   
   create() {
@@ -108,38 +115,73 @@ export class CrashedMetro {
   
   createSurvivors() {
     survivorsData.forEach(data => {
-      if (data.type === 'model') {
-        // --- ASYNCHRONOUS MODEL LOADING ---
-        
+      if (data.type === 'model' && data.modelPath?.endsWith('.glb')) {
         this.gltfLoader.load(data.modelPath, (gltf) => {
-          // This code runs AFTER the model has loaded
-          const survivor = gltf.scene;
-          
-          // Set position, scale, and userData HERE
-          survivor.position.set(...data.pos);
-          
-          // You will need to experiment to find the right scale!
-          const scale = data.scale || 1.0;
-          survivor.scale.set(scale, scale, scale);
-          
-          // Make sure the loaded model casts shadows
-          survivor.traverse((node) => {
-            if (node.isMesh) {
-              node.castShadow = true;
-              node.receiveShadow = true; // Optional
-            }
+          const glb = gltf.scene;
+          glb.position.set(...data.pos);
+          const scale = data.scale ?? 1.0;
+          glb.scale.set(scale, scale, scale);
+          glb.traverse((n) => {
+            if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; }
           });
-          
-          survivor.userData.dialogue = data.name;
-          survivor.userData.isInteractable = true;
-          
-          this.scene.add(survivor);
-          this.survivors.push(survivor);
+          if (gltf.animations && gltf.animations.length) {
+            const mixer = new THREE.AnimationMixer(glb);
+            const clip =
+              THREE.AnimationClip.findByName(gltf.animations, data.clipName) ||
+              gltf.animations[0];
+            const action = mixer.clipAction(clip);
+            if (data.poseTime != null) {
+              action.play();
+              action.paused = true;
+              action.time = data.poseTime;
+              mixer.update(0);
+            } else {
+              action.setLoop(data.loopOnce ? THREE.LoopOnce : THREE.LoopRepeat);
+              action.clampWhenFinished = !!data.loopOnce;
+              action.timeScale = data.speed ?? 1.0;
+              action.play();
+            }
+            this.mixers.push(mixer);
+          }
+          glb.userData.dialogue = data.name;
+          glb.userData.isInteractable = true;
+          this.scene.add(glb);
+          this.survivors.push(glb);
         });
-        
+      } else if (data.type === 'model' && data.modelPath?.endsWith('.fbx')) {
+        this.fbxLoader.load(data.modelPath, (fbx) => {
+          const s = data.scale ?? 0.01;
+          fbx.scale.setScalar(s);
+          fbx.traverse((n) => {
+            if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; }
+          });
+          fbx.position.set(...data.pos);
+          if (fbx.animations && fbx.animations.length) {
+            const mixer = new THREE.AnimationMixer(fbx);
+            const clip =
+              THREE.AnimationClip.findByName(fbx.animations, data.clipName) ||
+              fbx.animations[0];
+            const action = mixer.clipAction(clip);
+            if (data.poseTime != null) {
+              action.play();
+              action.paused = true;
+              action.time = data.poseTime;
+              mixer.update(0);
+            } else {
+              action.setLoop(data.loopOnce ? THREE.LoopOnce : THREE.LoopRepeat);
+              action.clampWhenFinished = !!data.loopOnce;
+              action.timeScale = data.speed ?? 1.0;
+              action.play();
+            }
+            this.mixers.push(mixer);
+          }
+          fbx.userData.dialogue = data.name;
+          fbx.userData.isInteractable = true;
+          this.scene.add(fbx);
+          this.survivors.push(fbx);
+        });
       } else {
         let survivor;
-      
         if (data.type === 'sitting') {
           if (data.child) {
             survivor = CharacterBuilder.createSittingHuman(data.color, 0.6);
@@ -149,12 +191,9 @@ export class CrashedMetro {
             survivor = CharacterBuilder.createSittingHuman(data.color, 1);
           }
         } else {
-          // Standing
-          if (data.elderly) {
-            survivor = CharacterBuilder.createElderly(data.color);
-          } else {
-            survivor = CharacterBuilder.createHuman(data.color);
-          }
+          survivor = data.elderly
+            ? CharacterBuilder.createElderly(data.color)
+            : CharacterBuilder.createHuman(data.color);
         }
         
         survivor.position.set(...data.pos);
