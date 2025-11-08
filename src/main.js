@@ -7,10 +7,12 @@ import './style.css';
 
 // Game state
 let scene, camera, renderer, controls;
+const clock = new THREE.Clock();
+let activeScene;
 let currentScene = 'normal';
 let sceneTimer = 0;
 const SCENE_DURATION = 30;
-let player = { height: 1.6, speed: 5 };
+let player = { height: 1.6, speed: 9 };
 let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 let velocity = new THREE.Vector3();
 let direction = new THREE.Vector3();
@@ -66,12 +68,19 @@ function init() {
     crosshair.classList.remove('hidden');
   });
 
+  // Click to start
+  // document.querySelector('.start-button').addEventListener('click', () => {
+  //   controls.lock();
+  //   document.getElementById('start-screen').classList.add('hidden');
+  // });
+
+  // Off start menu
   renderer.domElement.addEventListener('click', () => {
     controls.lock();
   });
 
   // Load initial scene
-  loadNormalScene();
+  loadCrashedScene();
   
   // Input
   setupInput();
@@ -90,7 +99,9 @@ function loadNormalScene() {
   const normalMetro = new NormalMetro(scene, textureLoader);
   normalMetro.create();
   interactables = normalMetro.getSurvivors();
-  
+
+  normalMetro.update = (delta) => {}; 
+  activeScene = normalMetro;
   camera.position.set(0, player.height, 5);
 }
 
@@ -104,8 +115,9 @@ function loadCrashedScene() {
   const crashedMetro = new CrashedMetro(scene, textureLoader);
   crashedMetro.create();
   interactables = crashedMetro.getSurvivors();
-  
-  camera.position.set(0, player.height * 0.5, 5);
+  activeScene = crashedMetro;
+
+  camera.position.set(0, player.height, 5);
 }
 
 function clearScene() {
@@ -242,10 +254,12 @@ function checkInteractions() {
 
 function animate() {
   requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  if (activeScene && activeScene.update) {
+    activeScene.update(delta);
+  }
   
   if (controls.isLocked) {
-    const delta = 0.016;
-
     if (currentScene === 'normal' && window.autoTransition) {
       sceneTimer += delta;
       if (sceneTimer >= SCENE_DURATION) {
@@ -254,8 +268,8 @@ function animate() {
       }
     }
     
-    velocity.x -= velocity.x * 10.0 * delta;
-    velocity.z -= velocity.z * 10.0 * delta;
+    velocity.x -= velocity.x * 5.0 * delta;
+    velocity.z -= velocity.z * 5.0 * delta;
     
     direction.z = Number(moveForward) - Number(moveBackward);
     direction.x = Number(moveRight) - Number(moveLeft);
