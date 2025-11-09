@@ -209,7 +209,7 @@ export class CrashedMetro {
     toy.position.set(0.5, 0.08, -1.5);
     toy.rotation.set(Math.PI / 2, 0, Math.random() * Math.PI);
     toy.userData.isToy = true;
-    toy.userData.dialogue = 'volt_toy';
+    toy.userData.dialogue = 'lexa_toy';
     toy.userData.isInteractable = true;
     this.scene.add(toy);
     this.survivors.push(toy);

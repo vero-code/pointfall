@@ -16,13 +16,13 @@ let player = { height: 1.6, speed: 9 };
 let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 let velocity = new THREE.Vector3();
 let direction = new THREE.Vector3();
-let interactables = [];
 let currentInteractable = null;
 let raycaster = new THREE.Raycaster();
 const textureLoader = new THREE.TextureLoader();
 
 let playerInventory = { water: 1 };
 let gameInProgress = true;
+let uiActionInProgress = false;
 
 // UI Elements
 const dialogueBox = document.getElementById('dialogue-box');
@@ -35,11 +35,18 @@ const restartButton = document.getElementById('restart-button');
 const crosshair = document.getElementById('crosshair');
 const inventoryItemsEl = document.getElementById('inventory-items');
 
+const choiceBox = document.getElementById('choice-box');
+const choiceSpeaker = document.getElementById('choice-speaker');
+const choicePrompt = document.getElementById('choice-prompt');
+const choiceBtn1 = document.getElementById('choice-btn-1');
+const choiceBtn2 = document.getElementById('choice-btn-2');
+
 // Initialize
 init();
 animate();
 
 function updateInventoryUI() {
+  if (!inventoryItemsEl) return;
   inventoryItemsEl.innerHTML = '';
   
   if (playerInventory.water > 0) {
@@ -49,10 +56,13 @@ function updateInventoryUI() {
         <span class="item-name">Water Bottle (1)</span>
       </div>
     `;
+  } else {
+    inventoryItemsEl.innerHTML += `
+      <div class="item">
+        <span class="item-name">(Empty)</span>
+      </div>
+    `;
   }
-  
-  // TODO: Draw a lollipop if you have one.
-  // if (playerInventory.candy > 0) { ... }
 }
 
 function init() {
@@ -79,8 +89,11 @@ function init() {
 
   // Pause menu
   controls.addEventListener('unlock', () => {
-    pauseMenu.classList.remove('hidden');
-    crosshair.classList.add('hidden');
+    if (gameInProgress && !uiActionInProgress) {
+      pauseMenu.classList.remove('hidden');
+      crosshair.classList.add('hidden');
+    }
+    uiActionInProgress = false;
   });
 
   controls.addEventListener('lock', () => {
@@ -96,7 +109,9 @@ function init() {
 
   // Off start menu
   renderer.domElement.addEventListener('click', () => {
-    controls.lock();
+    if (gameInProgress && !controls.isLocked) {
+      controls.lock();
+    }
   });
 
   // Load initial scene
@@ -154,24 +169,27 @@ function clearScene() {
     }
     scene.remove(object);
   });
-  
-  interactables = [];
 }
 
 function setupInput() {
   document.addEventListener('keydown', (e) => {
+    // Prevent movement if the choice box is open or the game is over
+    if (choiceBox.classList.contains('active') || !gameInProgress) {
+      moveForward = false;
+      moveBackward = false;
+      moveLeft = false;
+      moveRight = false;
+      return; 
+    }
+
     switch(e.code) {
       case 'KeyW': moveForward = true; break;
       case 'KeyS': moveBackward = true; break;
       case 'KeyA': moveLeft = true; break;
       case 'KeyD': moveRight = true; break;
       case 'KeyE': 
-        console.log("--- The E key is pressed ---"); 
         if (currentInteractable) {
-          console.log("Successful interaction with:", currentInteractable.userData.dialogue);
           interact(currentInteractable);
-        } else {
-          console.log("Interaction failed: currentInteractable = null");
         }
         break;
     }
@@ -249,18 +267,69 @@ function setupDebugControls() {
 }
 
 function interact(object) {
+  if (!gameInProgress) return;
+  dialogueBox.classList.remove('active');
+
   const dialogueKey = object.userData.dialogue;
-  const dialogueSet = currentScene === 'normal' ? DIALOGUES.normal : DIALOGUES.crashed;
-  const dialogue = dialogueSet[dialogueKey];
+  const dialogueSet = DIALOGUES[currentScene];
+  if (!dialogueSet) return;
   
-  if (dialogue) {
+  const dialogue = dialogueSet[dialogueKey];
+  if (!dialogue) return;
+  
+  // If the character has a CHOICE and we have WATER
+  if (dialogue.prompt && playerInventory.water > 0) {
+    uiActionInProgress = true;
+    controls.unlock();
+
+    choiceSpeaker.textContent = dialogue.name;
+    choicePrompt.textContent = dialogue.prompt;
+    choiceBtn1.textContent = dialogue.choice1;
+    choiceBtn2.textContent = dialogue.choice2;
+
+    choiceBtn1.onclick = () => handleChoice(dialogueKey, 1);
+    choiceBtn2.onclick = () => handleChoice(dialogueKey, 2);
+    
+    choiceBox.classList.add('active');
+    crosshair.classList.add('hidden');
+    
+  } else if (dialogue.text) {
     dialogueSpeaker.textContent = dialogue.name;
-    dialogueText.textContent = dialogue.text;
+    dialogueText.textContent = playerInventory.water > 0 ? dialogue.text : (dialogue.text_no_water || dialogue.text);
     dialogueBox.classList.add('active');
   }
 }
 
+function handleChoice(dialogueKey, choice) {
+  choiceBox.classList.remove('active');
+  crosshair.classList.remove('hidden');
+  controls.lock();
+
+  if (choice === 2) {
+    console.log("Player saved water.");
+    return; 
+  }
+
+  // --- Player chose [1] Give water ---
+  playerInventory.water = 0;
+  updateInventoryUI();
+  console.log("Water used.");
+
+  if (dialogueKey === 'martha') {
+    console.log("runGoodEnding");
+  } else {
+    console.log("runBadEnding");
+  }
+}
+
 function checkInteractions() {
+  // Don't show the [E] prompt if a choice is open or the game is over
+  if (choiceBox.classList.contains('active') || !gameInProgress) {
+    interactionPrompt.classList.remove('active');
+    currentInteractable = null;
+    return;
+  }
+  
   if (!activeScene || !activeScene.getSurvivors) {
     console.error("ERROR: activeScene or getSurvivors() not found!");
     return;
@@ -293,9 +362,6 @@ function checkInteractions() {
     currentInteractable = foundInteractable;
     interactionPrompt.classList.add('active');
   } else {
-    if (currentInteractable !== null) {
-      console.log("Miss.");
-    }
     currentInteractable = null;
     interactionPrompt.classList.remove('active');
   }

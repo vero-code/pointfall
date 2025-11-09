@@ -6,8 +6,8 @@ export const DIALOGUES = {
       name: "LENA (You)",
       text: "Just another evening commute. Can't wait to get home..."
     },
-    volt: {
-      name: "VOLT",
+    lexa: {
+      name: "LEXA",
       text: "Look! My astronaut! Isn't he cool? I want to be like him when I grow up!"
     },
     david_normal: {
@@ -22,29 +22,41 @@ export const DIALOGUES = {
   
   // Crashed scene dialogues
   crashed: {
-    axton: {
-      name: "AXTON",
-      text: "Something broke through the tunnel ceiling. A massive drill. Cut our car loose. We fell... I don't know how far."
-    },
     martha: {
       name: "MARTHA",
-      text: "Oh dear... Gladwin, are you hurt? We need to stay calm..."
-    },
-    gladwin: {
-      name: "GLADWIN",
-      text: "I'm okay, Martha. We'll get through this together."
-    },
-    david: {
-      name: "DAVID",
-      text: "VOLT! Can you hear me? Please be okay, buddy..."
+      prompt: "Don't waste it on me... save her... please, give it to the child...",
+      choice1: "[1] Give her the water anyway.",
+      choice2: "[2] Save it.",
+      text_no_water: "Please... the child... she's not breathing right..."
     },
     maya: {
       name: "MAYA",
-      text: "My leg... it's stuck. I can't move it. Can someone help?"
+      prompt: "My leg... please... it hurts so much...",
+      choice1: "[1] Give water.",
+      choice2: "[2] Save it for someone else.",
+      text_no_water: "It hurts... please, someone help..."
     },
-    volt_toy: {
-      name: "LENA (You)",
-      text: "Volt's astronaut... He was holding it so tightly. I should keep it safe."
+    axton: {
+      name: "AXTON",
+      prompt: "I can't breathe... the dust... water...",
+      choice1: "[1] Give water.",
+      choice2: "[2] 'I don't have any.' (Lie)",
+      text_no_water: "(He's coughing violently, unable to speak.)"
+    },
+    lexa: {
+      name: "LEXA",
+      prompt: "I don't feel good... my head is spinning... is my astronaut okay?...",
+      choice1: "[1] Give water.",
+      choice2: "[2] Save it for someone else.",
+      text_no_water: "(She's unconscious.)"
+    },
+    david: {
+      name: "DAVID",
+      text: "Find a doctor for my daughter! Please!",
+    },
+    lexa_toy: {
+      name: "ASTRONAUT TOY",
+      text: "Lexa's astronaut... She was holding it so tightly."
     }
   }
 };

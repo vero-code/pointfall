@@ -269,3 +269,48 @@ body {
 #inventory-items .item-icon {
   font-size: 20px;
 }
+
+/* Choice box */
+#choice-box {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid #0f0;
+  padding: 20px;
+  width: 90%;
+  max-width: 600px;
+  color: #fff;
+  pointer-events: auto;
+  display: none;
+}
+
+#choice-box.active {
+  display: block;
+}
+
+#choice-box .choice-buttons {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#choice-box button {
+  background: transparent;
+  border: 2px solid #0f0;
+  color: #0f0;
+  padding: 10px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+}
+
+#choice-box button:hover {
+  background: #0f0;
+  color: #000;
+}
