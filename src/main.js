@@ -21,6 +21,9 @@ let currentInteractable = null;
 let raycaster = new THREE.Raycaster();
 const textureLoader = new THREE.TextureLoader();
 
+let playerInventory = { water: 1 };
+let gameInProgress = true;
+
 // UI Elements
 const dialogueBox = document.getElementById('dialogue-box');
 const dialogueSpeaker = document.getElementById('dialogue-speaker');
@@ -30,10 +33,27 @@ const pauseMenu = document.getElementById('pause-menu');
 const resumeButton = document.getElementById('resume-button');
 const restartButton = document.getElementById('restart-button');
 const crosshair = document.getElementById('crosshair');
+const inventoryItemsEl = document.getElementById('inventory-items');
 
 // Initialize
 init();
 animate();
+
+function updateInventoryUI() {
+  inventoryItemsEl.innerHTML = '';
+  
+  if (playerInventory.water > 0) {
+    inventoryItemsEl.innerHTML += `
+      <div class="item">
+        <span class="item-icon">💧</span>
+        <span class="item-name">Water Bottle (1)</span>
+      </div>
+    `;
+  }
+  
+  // TODO: Draw a lollipop if you have one.
+  // if (playerInventory.candy > 0) { ... }
+}
 
 function init() {
   // Scene
@@ -87,6 +107,8 @@ function init() {
   
   // Window resize
   window.addEventListener('resize', onWindowResize);
+
+  updateInventoryUI();
 
   // setupDebugControls();
 }
