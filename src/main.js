@@ -3,6 +3,7 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import { NormalMetro } from './scenes/NormalMetro.js';
 import { CrashedMetro } from './scenes/CrashedMetro.js';
 import { DIALOGUES } from './data/dialogues.js';
+import { GAME_SETTINGS, PLAYER_SETTINGS, STARTING_STATE, SCENE_SETTINGS } from './config.js';
 import './style.css';
 
 // Game state
@@ -10,9 +11,7 @@ let scene, camera, renderer, controls;
 const clock = new THREE.Clock();
 let activeScene;
 let currentScene = 'crashed';
-let sceneTimer = 0;
-const SCENE_DURATION = 30;
-let player = { height: 1.6, speed: 9 };
+let player = { height: PLAYER_SETTINGS.HEIGHT, speed: PLAYER_SETTINGS.SPEED };
 let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
 let velocity = new THREE.Vector3();
 let direction = new THREE.Vector3();
@@ -20,9 +19,9 @@ let currentInteractable = null;
 let raycaster = new THREE.Raycaster();
 const textureLoader = new THREE.TextureLoader();
 
-let currentLevel = 1;
-const totalLevels = 5;
-let playerInventory = { water: 1, lollipop: 0 };
+let currentLevel = STARTING_STATE.LEVEL;
+const totalLevels = GAME_SETTINGS.TOTAL_LEVELS;
+let playerInventory = { ...STARTING_STATE.INVENTORY };
 let gameInProgress = true;
 let uiActionInProgress = false;
 
@@ -107,11 +106,11 @@ function init() {
   // Scene
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
-  scene.fog = new THREE.Fog(0x0a0a0a, 1, 15);
+  scene.fog = new THREE.Fog(SCENE_SETTINGS.FOG_COLOR, SCENE_SETTINGS.FOG_NEAR, SCENE_SETTINGS.FOG_FAR);
   
   // Camera
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, player.height, 5);
+  camera.position.set(SCENE_SETTINGS.STARTING_POSITION.x, SCENE_SETTINGS.STARTING_POSITION.y, SCENE_SETTINGS.STARTING_POSITION.z);
   scene.add(camera);
   
   // Renderer
@@ -165,7 +164,7 @@ function init() {
   window.addEventListener('resize', onWindowResize);
 
   updateInventoryUI();
-  updateObjective(1, "Talk to survivors");
+  updateObjective(STARTING_STATE.LEVEL, "Talk to survivors");
 
   // setupDebugControls();
 }
@@ -184,12 +183,12 @@ function loadNormalScene() {
 function loadCrashedScene() {
   clearScene();
   currentScene = 'crashed';
-  scene.fog = new THREE.Fog(0x0a0a0a, 1, 15);
+  scene.fog = new THREE.Fog(SCENE_SETTINGS.FOG_COLOR, SCENE_SETTINGS.FOG_NEAR, SCENE_SETTINGS.FOG_FAR);
   scene.background = new THREE.Color(0x000000);
   const crashedMetro = new CrashedMetro(scene, textureLoader);
   crashedMetro.create();
   activeScene = crashedMetro;
-  camera.position.set(0, player.height, 5);
+  camera.position.set(SCENE_SETTINGS.STARTING_POSITION.x, SCENE_SETTINGS.STARTING_POSITION.y, SCENE_SETTINGS.STARTING_POSITION.z);
 }
 
 function clearScene() {
@@ -445,8 +444,8 @@ function handleChoice(type, dialogueKey, choice) {
       // Update UI and Objective
       setTimeout(() => {
         updateInventoryUI();
-        updateObjective(3, "Share a lollipop <br>(Find a way to open the door)");
-      }, 1000); // Give time to "discover" the lollipop
+        updateObjective(3, "Share a lollipop");
+      }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
 
     } else {
       // WRONG CHOICE
@@ -494,7 +493,7 @@ function handleChoice(type, dialogueKey, choice) {
       // Update Objective
       setTimeout(() => {
         updateObjective(5, "Carry Maya");
-      }, 1000); // Axton opens the door
+      }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY); // Axton opens the door
 
     } else {
       // WRONG CHOICE (any other)
@@ -590,11 +589,7 @@ function checkInteractions() {
     return;
   }
   
-  if (!activeScene || !activeScene.getSurvivors) {
-    // console.error("ERROR: activeScene or getSurvivors() not found!");
-    // This error can spam if the scene isn't loaded yet.
-    return;
-  }
+  if (!activeScene || !activeScene.getSurvivors) { return; }
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
   
   const survivorsList = activeScene.getSurvivors();
@@ -605,7 +600,7 @@ function checkInteractions() {
   const intersects = raycaster.intersectObjects(survivorsList, true);
   let foundInteractable = null;
 
-  if (intersects.length > 0 && intersects[0].distance < 2) {
+  if (intersects.length > 0 && intersects[0].distance < PLAYER_SETTINGS.INTERACTION_DISTANCE) {
     let object = intersects[0].object;
     while (object) {
       if (object.userData.isInteractable) {
@@ -633,16 +628,8 @@ function animate() {
   }
   
   if (controls.isLocked) {
-    if (currentScene === 'normal' && window.autoTransition) {
-      sceneTimer += delta;
-      if (sceneTimer >= SCENE_DURATION) {
-        transitionToCrashed();
-        return;
-      }
-    }
-    
-    velocity.x -= velocity.x * 5.0 * delta;
-    velocity.z -= velocity.z * 5.0 * delta;
+    velocity.x -= velocity.x * PLAYER_SETTINGS.MOVEMENT_DAMPING * delta;
+    velocity.z -= velocity.z * PLAYER_SETTINGS.MOVEMENT_DAMPING * delta;
     
     direction.z = Number(moveForward) - Number(moveBackward);
     direction.x = Number(moveRight) - Number(moveLeft);
