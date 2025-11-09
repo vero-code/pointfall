@@ -9,7 +9,7 @@ import './style.css';
 let scene, camera, renderer, controls;
 const clock = new THREE.Clock();
 let activeScene;
-let currentScene = 'normal';
+let currentScene = 'crashed';
 let sceneTimer = 0;
 const SCENE_DURATION = 30;
 let player = { height: 1.6, speed: 9 };
@@ -20,7 +20,9 @@ let currentInteractable = null;
 let raycaster = new THREE.Raycaster();
 const textureLoader = new THREE.TextureLoader();
 
-let playerInventory = { water: 1 };
+let currentLevel = 1;
+const totalLevels = 5;
+let playerInventory = { water: 1, lollipop: 0 };
 let gameInProgress = true;
 let uiActionInProgress = false;
 
@@ -46,13 +48,32 @@ const endTitle = document.getElementById('end-title');
 const endSubtitle = document.getElementById('end-subtitle');
 const restartButtonEnd = document.getElementById('restart-button-end');
 
+const levelEl = document.getElementById('level');
+const objectiveTextEl = document.getElementById('objective-text');
+const startScreen = document.getElementById('start-screen');
+const startButton = startScreen.querySelector('.start-button');
+
 // Initialize
 init();
 animate();
 
+// Update Level and Objective
+function updateObjective(level, text) {
+  if (level > totalLevels) level = totalLevels;
+  currentLevel = level;
+  
+  if (levelEl) {
+    levelEl.textContent = `${currentLevel} / ${totalLevels}`;
+  }
+  if (objectiveTextEl) {
+    objectiveTextEl.innerHTML = text;
+  }
+}
+
 function updateInventoryUI() {
   if (!inventoryItemsEl) return;
   inventoryItemsEl.innerHTML = '';
+  let itemsFound = false;
   
   if (playerInventory.water > 0) {
     inventoryItemsEl.innerHTML += `
@@ -61,7 +82,19 @@ function updateInventoryUI() {
         <span class="item-name">Water Bottle (1)</span>
       </div>
     `;
-  } else {
+    itemsFound = true;
+  }
+  if (playerInventory.lollipop > 0) {
+    inventoryItemsEl.innerHTML += `
+      <div class="item">
+        <span class="item-icon">🍭</span>
+        <span class="item-name">Lollipop (1)</span>
+      </div>
+    `;
+    itemsFound = true;
+  }
+
+  if (!itemsFound) {
     inventoryItemsEl.innerHTML += `
       <div class="item">
         <span class="item-name">(Empty)</span>
@@ -106,15 +139,18 @@ function init() {
     crosshair.classList.remove('hidden');
   });
 
-  // Click to start
-  // document.querySelector('.start-button').addEventListener('click', () => {
+  // Uncomment -> Show start screen
+  //startScreen.classList.remove('hidden');
+
+  // Uncomment -> Click on "Start" button
+  // startButton.addEventListener('click', () => {
+  //   startScreen.classList.add('hidden');
   //   controls.lock();
-  //   document.getElementById('start-screen').classList.add('hidden');
   // });
 
-  // Off start menu
+  // Comment out -> Click to lock (if out of focus)
   renderer.domElement.addEventListener('click', () => {
-    if (gameInProgress && !controls.isLocked) {
+    if (gameInProgress && !controls.isLocked && startScreen.classList.contains('hidden')) {
       controls.lock();
     }
   });
@@ -129,6 +165,7 @@ function init() {
   window.addEventListener('resize', onWindowResize);
 
   updateInventoryUI();
+  updateObjective(1, "Talk to survivors");
 
   // setupDebugControls();
 }
@@ -281,74 +318,255 @@ function interact(object) {
   dialogueBox.classList.remove('active');
 
   const dialogueKey = object.userData.dialogue;
+  if (!dialogueKey) return;
+
   const dialogueSet = DIALOGUES[currentScene];
   if (!dialogueSet) return;
   
   const dialogue = dialogueSet[dialogueKey];
   if (!dialogue) return;
+
+  uiActionInProgress = true;
+  controls.unlock();
+  crosshair.classList.add('hidden');
+  choiceBtn2.classList.remove('hidden'); // Show 2nd button (just in case)
   
-  // If the character has a CHOICE and we have WATER
-  if (dialogue.prompt && playerInventory.water > 0) {
-    uiActionInProgress = true;
-    controls.unlock();
-
+  // 1. LEVEL 1: David's Quest
+  if (currentLevel === 1 && dialogueKey === 'david') {
     choiceSpeaker.textContent = dialogue.name;
-    choicePrompt.textContent = dialogue.prompt;
-    choiceBtn1.textContent = dialogue.choice1;
-    choiceBtn2.textContent = dialogue.choice2;
-
-    choiceBtn1.onclick = () => handleChoice(dialogueKey, 1);
-    choiceBtn2.onclick = () => handleChoice(dialogueKey, 2);
+    choicePrompt.textContent = dialogue.text_lvl1;
+    choiceBtn1.textContent = dialogue.choice1_lvl1;
+    choiceBtn2.classList.add('hidden'); // Hide second button
+    
+    choiceBtn1.onclick = () => handleChoice('david_quest', dialogueKey, 1);
+    choiceBtn2.onclick = null;
     
     choiceBox.classList.add('active');
-    crosshair.classList.add('hidden');
-    
-  } else if (dialogue.text) {
-    dialogueSpeaker.textContent = dialogue.name;
-    dialogueText.textContent = playerInventory.water > 0 ? dialogue.text : (dialogue.text_no_water || dialogue.text);
-    dialogueBox.classList.add('active');
+    return;
   }
+
+  // 2. LEVEL 1-2: WATER Choice
+  if (currentLevel <= 2 && playerInventory.water > 0 && dialogue.water_prompt) {
+    choiceSpeaker.textContent = dialogue.name;
+    choicePrompt.textContent = dialogue.water_prompt;
+    choiceBtn1.textContent = dialogue.water_choice1;
+    choiceBtn2.textContent = dialogue.water_choice2;
+
+    choiceBtn1.onclick = () => handleChoice('water', dialogueKey, 1);
+    choiceBtn2.onclick = () => handleChoice('water', dialogueKey, 2);
+    
+    choiceBox.classList.add('active');
+    return;
+  }
+
+  // 3. LEVEL 3-4: LOLLIPOP Choice
+  if (currentLevel >= 3 && playerInventory.lollipop > 0 && dialogue.lollipop_prompt) {
+    choiceSpeaker.textContent = dialogue.name;
+    choicePrompt.textContent = dialogue.lollipop_prompt;
+    choiceBtn1.textContent = dialogue.lollipop_choice1;
+    choiceBtn2.textContent = dialogue.lollipop_choice2;
+
+    choiceBtn1.onclick = () => handleChoice('lollipop', dialogueKey, 1);
+    choiceBtn2.onclick = () => handleChoice('lollipop', dialogueKey, 2);
+    
+    choiceBox.classList.add('active');
+    return;
+  }
+  
+  // 4. LEVEL 3-4: DOOR Choice (David only)
+  if (currentLevel >= 3 && dialogueKey === 'david' && dialogue.door_prompt) {
+    choiceSpeaker.textContent = dialogue.name;
+    choicePrompt.textContent = dialogue.door_prompt;
+    choiceBtn1.textContent = dialogue.door_choice1;
+    choiceBtn2.textContent = dialogue.door_choice2;
+
+    choiceBtn1.onclick = () => handleChoice('door', dialogueKey, 1);
+    choiceBtn2.onclick = () => handleChoice('door', dialogueKey, 2);
+    
+    choiceBox.classList.add('active');
+    return;
+  }
+
+  // 5. LEVEL 5: CARRY Maya Choice
+  if (currentLevel === 5 && dialogue.carry_prompt) {
+    choiceSpeaker.textContent = dialogue.name;
+    choicePrompt.textContent = dialogue.carry_prompt;
+    choiceBtn1.textContent = dialogue.carry_choice1;
+    choiceBtn2.textContent = dialogue.carry_choice2;
+
+    choiceBtn1.onclick = () => handleChoice('carry', dialogueKey, 1);
+    choiceBtn2.onclick = () => handleChoice('carry', dialogueKey, 2);
+    
+    choiceBox.classList.add('active');
+    return;
+  }
+  
+  // 6. DEFAULT DIALOGUE (if no choices apply)
+  uiActionInProgress = false; // Not a UI action
+  controls.lock(); // Give back control
+  crosshair.classList.remove('hidden');
+
+  dialogueSpeaker.textContent = dialogue.name;
+  dialogueText.textContent = dialogue.text || "(The character is silent)";
+  dialogueBox.classList.add('active');
 }
 
-function handleChoice(dialogueKey, choice) {
+function handleChoice(type, dialogueKey, choice) {
   choiceBox.classList.remove('active');
   crosshair.classList.remove('hidden');
   controls.lock();
 
-  if (choice === 2) {
-    console.log("Player saved water.");
-    return; 
+  // --- DAVID'S QUEST Choice (Level 1 -> 2) ---
+  if (type === 'david_quest') {
+    if (choice === 1) {
+      updateObjective(2, "Find the doctor");
+    }
+    return;
   }
 
-  // --- Player chose [1] Give water ---
-  playerInventory.water = 0;
-  updateInventoryUI();
-  console.log("Water used.");
+  // --- WATER Choice (Level 2) ---
+  if (type === 'water') {
+    if (choice === 2) {
+      console.log("Player saved water.");
+      return; // Player does nothing
+    }
+    
+    // Player gave water
+    playerInventory.water = 0;
+    updateInventoryUI();
 
-  if (dialogueKey === 'martha') {
-    runGoodEnding();
-  } else {
-    runBadEnding(dialogueKey);
+    if (dialogueKey === 'martha') {
+      // CORRECT CHOICE
+      console.log("Correct: Gave water to MARTHA");
+      // TODO: Trigger Martha's animation
+      
+      // Lollipop appears
+      playerInventory.lollipop = 1;
+      // Update UI and Objective
+      setTimeout(() => {
+        updateInventoryUI();
+        updateObjective(3, "Share a lollipop <br>(Find a way to open the door)");
+      }, 1000); // Give time to "discover" the lollipop
+
+    } else {
+      // WRONG CHOICE
+      runBadEnding(
+        "Sometimes, good intentions aren't enough.", 
+        "P.S. You gave the bottle to the wrong person."
+      );
+    }
+    return;
+  }
+
+  // --- DOOR Choice (Level 3-4, at David) ---
+  if (type === 'door') {
+    if (dialogueKey === 'david' && choice === 1) {
+      // Ending: broke shoulder
+      runBadEnding(
+        "Force is not the answer", 
+        "DAVID broke his shoulder, and you remained trapped."
+      );
+    }
+    if (dialogueKey === 'david' && choice === 2) {
+      // Correct: Look for electrician
+      console.log("Correct: Look for electrician.");
+      updateObjective(4, "Find the electrician and open the door");
+    }
+    return;
+  }
+
+  // --- LOLLIPOP Choice (Level 4) ---
+  if (type === 'lollipop') {
+    if (choice === 2) {
+      console.log("Player saved lollipop.");
+      return; // Player does nothing
+    }
+
+    // Player gave lollipop
+    playerInventory.lollipop = 0;
+    updateInventoryUI();
+
+    if (dialogueKey === 'axton') {
+      // CORRECT CHOICE
+      console.log("Correct: Gave lollipop to AXTON");
+      // TODO: Animate Axton going to the door
+      
+      // Update Objective
+      setTimeout(() => {
+        updateObjective(5, "Carry Maya");
+      }, 1000); // Axton opens the door
+
+    } else {
+      // WRONG CHOICE (any other)
+      runBadEnding(
+        "Wrong choice", 
+        "The lollipop wasn't for them. The exit remained closed."
+      );
+    }
+    return;
+  }
+
+  // --- CARRY Maya Choice (Level 5) ---
+  if (type === 'carry') {
+    // 1. Choice on Maya herself
+    if (dialogueKey === 'maya') {
+      if (choice === 1) {
+        // Ending: Twisted other leg
+        runBadEnding(
+          "Heavy burden", 
+          "As soon as you and MAYA started walking, she twisted her other leg... and it was over."
+        );
+      }
+      if (choice === 2) {
+        console.log("Decided to find help");
+        // Nothing happens, just close window
+      }
+      return;
+    }
+    
+    // 2. Choice on other characters (Axton, Martha, Lexa, David)
+    if (choice === 1) {
+      // Ending: Leave alone
+      runBadEnding("Selfish", "You left, leaving Maya and the others behind.");
+    }
+    if (choice === 2) {
+      // Ask for help
+      if (dialogueKey === 'david') {
+        // CORRECT CHOICE (FINAL)
+        runGoodEnding(
+          "DEMO version is over.", 
+          "Thanks for playing. vero-game."
+        );
+      } else {
+        // Ending: wrong helper
+        const helperName = dialogueKey.charAt(0).toUpperCase() + dialogueKey.slice(1);
+        runBadEnding(
+          "Wrong helper", 
+          `${helperName} couldn't help. You lost too much time.`
+        );
+      }
+    }
+    return;
   }
 }
 
-function runBadEnding(person) {
-  console.log(`Bad Ending: Gave water to ${person}`);
+function runBadEnding(title, subtitle) {
+  console.log("Bad Ending!");
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
   moveLeft = false;
   moveRight = false;
 
-  endTitle.textContent = "Sometimes, good intentions aren't enough.";
-  endSubtitle.textContent = "P.S. You gave the bottle to the wrong person.";
+  endTitle.textContent = title;
+  endSubtitle.textContent = subtitle;
   
   endScreen.classList.remove('hidden');
   crosshair.classList.add('hidden');
   controls.unlock();
 }
 
-function runGoodEnding() {
+function runGoodEnding(title, subtitle) {
   console.log("Good Ending!");
   gameInProgress = false;
   moveForward = false;
@@ -356,10 +574,8 @@ function runGoodEnding() {
   moveLeft = false;
   moveRight = false;
   
-  // TODO: Start Martha's animation
-  
-  endTitle.textContent = "The right choice saved a life.";
-  endSubtitle.textContent = "The child will live.";
+  endTitle.textContent = title;
+  endSubtitle.textContent = subtitle;
   
   endScreen.classList.remove('hidden');
   crosshair.classList.add('hidden');
@@ -375,13 +591,14 @@ function checkInteractions() {
   }
   
   if (!activeScene || !activeScene.getSurvivors) {
-    console.error("ERROR: activeScene or getSurvivors() not found!");
+    // console.error("ERROR: activeScene or getSurvivors() not found!");
+    // This error can spam if the scene isn't loaded yet.
     return;
   }
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
   
   const survivorsList = activeScene.getSurvivors();
-  if (survivorsList.length === 0) {
+  if (!survivorsList || survivorsList.length === 0) {
     return;
   }
 
