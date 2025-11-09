@@ -41,6 +41,11 @@ const choicePrompt = document.getElementById('choice-prompt');
 const choiceBtn1 = document.getElementById('choice-btn-1');
 const choiceBtn2 = document.getElementById('choice-btn-2');
 
+const endScreen = document.getElementById('end-screen');
+const endTitle = document.getElementById('end-title');
+const endSubtitle = document.getElementById('end-subtitle');
+const restartButtonEnd = document.getElementById('restart-button-end');
+
 // Initialize
 init();
 animate();
@@ -214,8 +219,13 @@ function setupInput() {
     controls.lock();
   });
 
-  // Restart button
+  // Restart button (from pause)
   restartButton.addEventListener('click', () => {
+    location.reload();
+  });
+
+  // Restart button (from end screen)
+  restartButtonEnd.addEventListener('click', () => {
     location.reload();
   });
 }
@@ -316,10 +326,44 @@ function handleChoice(dialogueKey, choice) {
   console.log("Water used.");
 
   if (dialogueKey === 'martha') {
-    console.log("runGoodEnding");
+    runGoodEnding();
   } else {
-    console.log("runBadEnding");
+    runBadEnding(dialogueKey);
   }
+}
+
+function runBadEnding(person) {
+  console.log(`Bad Ending: Gave water to ${person}`);
+  gameInProgress = false;
+  moveForward = false;
+  moveBackward = false;
+  moveLeft = false;
+  moveRight = false;
+
+  endTitle.textContent = "Sometimes, good intentions aren't enough.";
+  endSubtitle.textContent = "P.S. You gave the bottle to the wrong person.";
+  
+  endScreen.classList.remove('hidden');
+  crosshair.classList.add('hidden');
+  controls.unlock();
+}
+
+function runGoodEnding() {
+  console.log("Good Ending!");
+  gameInProgress = false;
+  moveForward = false;
+  moveBackward = false;
+  moveLeft = false;
+  moveRight = false;
+  
+  // TODO: Start Martha's animation
+  
+  endTitle.textContent = "The right choice saved a life.";
+  endSubtitle.textContent = "The child will live.";
+  
+  endScreen.classList.remove('hidden');
+  crosshair.classList.add('hidden');
+  controls.unlock();
 }
 
 function checkInteractions() {
@@ -356,9 +400,6 @@ function checkInteractions() {
   }
 
   if (foundInteractable) {
-    if (currentInteractable !== foundInteractable) {
-      console.log(`Object:`, foundInteractable.userData.dialogue);
-    }
     currentInteractable = foundInteractable;
     interactionPrompt.classList.add('active');
   } else {
