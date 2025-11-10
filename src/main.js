@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { NormalMetro } from './scenes/NormalMetro.js';
 import { CrashedMetro } from './scenes/CrashedMetro.js';
 import { DIALOGUES, OBJECTIVES } from './data/dialogues.js';
+import { ENDINGS } from './data/text.js';
 import { GAME_SETTINGS, PLAYER_SETTINGS, STARTING_STATE, SCENE_SETTINGS } from './config.js';
 import './style.css';
 
@@ -98,7 +98,7 @@ function updateInventoryUI() {
   if (!itemsFound) {
     inventoryItemsEl.innerHTML += `
       <div class="item">
-        <span class="item-name">(Empty)</span>
+        <span class="item-name">(empty)</span>
       </div>
     `;
   }
@@ -169,17 +169,6 @@ function init() {
   updateObjective(STARTING_STATE.LEVEL);
 
   // setupDebugControls();
-}
-
-function loadNormalScene() {
-  clearScene();
-  currentScene = 'normal';
-  sceneTimer = 0;
-  const normalMetro = new NormalMetro(scene, textureLoader);
-  normalMetro.create();
-  normalMetro.update = (delta) => {}; 
-  activeScene = normalMetro;
-  camera.position.set(0, player.height, 5);
 }
 
 function loadCrashedScene() {
@@ -330,14 +319,14 @@ function interact(object) {
   uiActionInProgress = true;
   controls.unlock();
   crosshair.classList.add('hidden');
-  choiceBtn2.classList.remove('hidden'); // Show 2nd button (just in case)
+  choiceBtn2.classList.remove('hidden');
   
-  // 1. LEVEL 1: David's Quest
-  if (currentLevel === 1 && dialogueKey === 'david') {
+  // Lvl 1 Clue
+  if (currentLevel === 1 && dialogueKey === 'david' && dialogue.text_lvl1) {
     choiceSpeaker.textContent = dialogue.name;
     choicePrompt.textContent = dialogue.text_lvl1;
     choiceBtn1.textContent = dialogue.choice1_lvl1;
-    choiceBtn2.classList.add('hidden'); // Hide second button
+    choiceBtn2.classList.add('hidden');
     
     choiceBtn1.onclick = () => handleChoice('david_quest', dialogueKey, 1);
     choiceBtn2.onclick = null;
@@ -346,8 +335,8 @@ function interact(object) {
     return;
   }
 
-  // 2. LEVEL 1-2: WATER Choice
-  if (currentLevel <= 2 && playerInventory.water > 0 && dialogue.water_prompt) {
+  // Lvl 2 Water
+  if (currentLevel === 2 && playerInventory.water > 0 && dialogue.water_prompt) {
     choiceSpeaker.textContent = dialogue.name;
     choicePrompt.textContent = dialogue.water_prompt;
     choiceBtn1.textContent = dialogue.water_choice1;
@@ -360,8 +349,8 @@ function interact(object) {
     return;
   }
 
-  // 3. LEVEL 3-4: LOLLIPOP Choice
-  if (currentLevel >= 3 && playerInventory.lollipop > 0 && dialogue.lollipop_prompt) {
+  // Lvl 3 Lollipop
+  if (currentLevel === 3 && playerInventory.lollipop > 0 && dialogue.lollipop_prompt) {
     choiceSpeaker.textContent = dialogue.name;
     choicePrompt.textContent = dialogue.lollipop_prompt;
     choiceBtn1.textContent = dialogue.lollipop_choice1;
@@ -374,8 +363,8 @@ function interact(object) {
     return;
   }
   
-  // 4. LEVEL 3-4: DOOR Choice (David only)
-  if (currentLevel >= 3 && dialogueKey === 'david' && dialogue.door_prompt) {
+  // Lvl 4 Door
+  if (currentLevel === 4 && dialogue.door_prompt) {
     choiceSpeaker.textContent = dialogue.name;
     choicePrompt.textContent = dialogue.door_prompt;
     choiceBtn1.textContent = dialogue.door_choice1;
@@ -388,7 +377,7 @@ function interact(object) {
     return;
   }
 
-  // 5. LEVEL 5: CARRY Maya Choice
+  // Lvl 5 Carry
   if (currentLevel === 5 && dialogue.carry_prompt) {
     choiceSpeaker.textContent = dialogue.name;
     choicePrompt.textContent = dialogue.carry_prompt;
@@ -403,12 +392,18 @@ function interact(object) {
   }
   
   // 6. DEFAULT DIALOGUE (if no choices apply)
-  uiActionInProgress = false; // Not a UI action
-  controls.lock(); // Give back control
+  uiActionInProgress = false; 
+  controls.lock(); 
   crosshair.classList.remove('hidden');
 
   dialogueSpeaker.textContent = dialogue.name;
-  dialogueText.textContent = dialogue.text || "(The character is silent)";
+  
+  let textToShow = dialogue.text;
+  if (currentLevel === 1 && dialogue.text_lvl1 && dialogueKey !== 'david') {
+      textToShow = dialogue.text_lvl1;
+  }
+  
+  dialogueText.textContent = textToShow || "(The character is silent)";
   dialogueBox.classList.add('active');
 }
 
@@ -417,135 +412,86 @@ function handleChoice(type, dialogueKey, choice) {
   crosshair.classList.remove('hidden');
   controls.lock();
 
-  // --- DAVID'S QUEST Choice (Level 1 -> 2) ---
+  // --- Lvl 1 Clue ---
   if (type === 'david_quest') {
     if (choice === 1) {
-      updateObjective(2);
+      playerInventory.water = 1;
+      updateInventoryUI();
+      updateObjective(2); // Go to Level 2
     }
     return;
   }
 
-  // --- WATER Choice (Level 2) ---
+  // --- Lvl 2 Water ---
   if (type === 'water') {
-    if (choice === 2) {
-      console.log("Player saved water.");
-      return; // Player does nothing
-    }
+    if (choice === 2) return; // Player saved the water
     
-    // Player gave water
     playerInventory.water = 0;
     updateInventoryUI();
 
     if (dialogueKey === 'martha') {
-      // CORRECT CHOICE
-      console.log("Correct: Gave water to MARTHA");
-      // TODO: Trigger Martha's animation
-      
-      // Lollipop appears
-      playerInventory.lollipop = 1;
-      // Update UI and Objective
+      // RIGHT CHOICE
+      playerInventory.lollipop = 1; // Get lollipop
       setTimeout(() => {
         updateInventoryUI();
-        updateObjective(3);
+        updateObjective(3); // Go to Level 3
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
-
     } else {
-      // WRONG CHOICE
-      runBadEnding(
-        "Sometimes, good intentions aren't enough.", 
-        "P.S. You gave the bottle to the wrong person."
-      );
+      runBadEnding(ENDINGS.WATER_WRONG.title, ENDINGS.WATER_WRONG.subtitle);
     }
     return;
   }
 
-  // --- DOOR Choice (Level 3-4, at David) ---
-  if (type === 'door') {
-    if (dialogueKey === 'david' && choice === 1) {
-      // Ending: broke shoulder
-      runBadEnding(
-        "Force is not the answer", 
-        "DAVID broke his shoulder, and you remained trapped."
-      );
-    }
-    if (dialogueKey === 'david' && choice === 2) {
-      // Correct: Look for electrician
-      console.log("Correct: Look for electrician.");
-      updateObjective(4);
-    }
-    return;
-  }
-
-  // --- LOLLIPOP Choice (Level 4) ---
+  // --- Lvl 3 Lollipop ---
   if (type === 'lollipop') {
-    if (choice === 2) {
-      console.log("Player saved lollipop.");
-      return; // Player does nothing
-    }
+    if (choice === 2) return; // Saved the lollipop
 
-    // Player gave lollipop
     playerInventory.lollipop = 0;
     updateInventoryUI();
 
     if (dialogueKey === 'axton') {
-      // CORRECT CHOICE
-      console.log("Correct: Gave lollipop to AXTON");
-      // TODO: Animate Axton going to the door
-      
-      // Update Objective
+      // RIGHT CHOICE
       setTimeout(() => {
-        updateObjective(5);
-      }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY); // Axton opens the door
-
+        updateObjective(4); // Go to Level 4
+      }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
     } else {
-      // WRONG CHOICE (any other)
-      runBadEnding(
-        "Wrong choice", 
-        "The lollipop wasn't for them. The exit remained closed."
-      );
+      runBadEnding(ENDINGS.LOLLIPOP_WRONG.title, ENDINGS.LOLLIPOP_WRONG.subtitle);
     }
     return;
   }
 
-  // --- CARRY Maya Choice (Level 5) ---
+  // --- Lvl 4 Door ---
+  if (type === 'door') {
+    if (choice === 2) return; // Player remained silent
+
+    if (dialogueKey === 'axton') {
+      // RIGHT CHOICE
+      setTimeout(() => {
+        updateObjective(5); // Go to Level 5
+      }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
+    } else {
+      runBadEnding(ENDINGS.DOOR_WRONG.title, ENDINGS.DOOR_WRONG.subtitle);
+    }
+    return;
+  }
+  
+  // --- Lvl 5 Carry ---
   if (type === 'carry') {
-    // 1. Choice on Maya herself
     if (dialogueKey === 'maya') {
       if (choice === 1) {
-        // Ending: Twisted other leg
-        runBadEnding(
-          "Heavy burden", 
-          "As soon as you and MAYA started walking, she twisted her other leg... and it was over."
-        );
-      }
-      if (choice === 2) {
-        console.log("Decided to find help");
-        // Nothing happens, just close window
+        runBadEnding(ENDINGS.CARRY_WRONG.title, ENDINGS.CARRY_WRONG.subtitle);
       }
       return;
     }
     
-    // 2. Choice on other characters (Axton, Martha, Lexa, David)
-    if (choice === 1) {
-      // Ending: Leave alone
-      runBadEnding("Selfish", "You left, leaving Maya and the others behind.");
-    }
-    if (choice === 2) {
-      // Ask for help
-      if (dialogueKey === 'david') {
-        // CORRECT CHOICE (FINAL)
-        runGoodEnding(
-          "DEMO version is over.", 
-          "Thanks for playing. vero-game."
-        );
-      } else {
-        // Ending: wrong helper
-        const helperName = dialogueKey.charAt(0).toUpperCase() + dialogueKey.slice(1);
-        runBadEnding(
-          "Wrong helper", 
-          `${helperName} couldn't help. You lost too much time.`
-        );
-      }
+    // Other characters
+    if (choice === 2) return;
+   
+    if (dialogueKey === 'david') {
+      // FINALE
+      runGoodEnding(ENDINGS.DEMO_COMPLETE.title, ENDINGS.DEMO_COMPLETE.subtitle);
+    } else {
+      runBadEnding(ENDINGS.CARRY_WRONG.title, ENDINGS.CARRY_WRONG.subtitle);
     }
     return;
   }
