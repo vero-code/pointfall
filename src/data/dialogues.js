@@ -1,4 +1,12 @@
 // src/data/dialogues.js
+export const OBJECTIVES = {
+  1: "Talk to survivors",
+  2: "Find the doctor",
+  3: "Share a lollipop",
+  4: "Open the door",
+  5: "Carry Maya"
+};
+
 export const DIALOGUES = {
   // Normal scene dialogues
   normal: {

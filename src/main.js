@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { NormalMetro } from './scenes/NormalMetro.js';
 import { CrashedMetro } from './scenes/CrashedMetro.js';
-import { DIALOGUES } from './data/dialogues.js';
+import { DIALOGUES, OBJECTIVES } from './data/dialogues.js';
 import { GAME_SETTINGS, PLAYER_SETTINGS, STARTING_STATE, SCENE_SETTINGS } from './config.js';
 import './style.css';
 
@@ -57,15 +57,17 @@ init();
 animate();
 
 // Update Level and Objective
-function updateObjective(level, text) {
+function updateObjective(level, text = null) {
   if (level > totalLevels) level = totalLevels;
   currentLevel = level;
+
+  const newText = text || OBJECTIVES[level] || `Objective ${level}???`;
   
   if (levelEl) {
     levelEl.textContent = `${currentLevel} / ${totalLevels}`;
   }
   if (objectiveTextEl) {
-    objectiveTextEl.innerHTML = text;
+    objectiveTextEl.innerHTML = newText;
   }
 }
 
@@ -164,7 +166,7 @@ function init() {
   window.addEventListener('resize', onWindowResize);
 
   updateInventoryUI();
-  updateObjective(STARTING_STATE.LEVEL, "Talk to survivors");
+  updateObjective(STARTING_STATE.LEVEL);
 
   // setupDebugControls();
 }
@@ -418,7 +420,7 @@ function handleChoice(type, dialogueKey, choice) {
   // --- DAVID'S QUEST Choice (Level 1 -> 2) ---
   if (type === 'david_quest') {
     if (choice === 1) {
-      updateObjective(2, "Find the doctor");
+      updateObjective(2);
     }
     return;
   }
@@ -444,7 +446,7 @@ function handleChoice(type, dialogueKey, choice) {
       // Update UI and Objective
       setTimeout(() => {
         updateInventoryUI();
-        updateObjective(3, "Share a lollipop");
+        updateObjective(3);
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
 
     } else {
@@ -469,7 +471,7 @@ function handleChoice(type, dialogueKey, choice) {
     if (dialogueKey === 'david' && choice === 2) {
       // Correct: Look for electrician
       console.log("Correct: Look for electrician.");
-      updateObjective(4, "Find the electrician and open the door");
+      updateObjective(4);
     }
     return;
   }
@@ -492,7 +494,7 @@ function handleChoice(type, dialogueKey, choice) {
       
       // Update Objective
       setTimeout(() => {
-        updateObjective(5, "Carry Maya");
+        updateObjective(5);
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY); // Axton opens the door
 
     } else {
