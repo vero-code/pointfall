@@ -13,7 +13,7 @@ export const PLAYER_SETTINGS = {
 
 export const STARTING_STATE = {
     INVENTORY: {
-        water: 1,
+        water: 0,
         lollipop: 0,
     },
     LEVEL: 1,
