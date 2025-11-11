@@ -303,6 +303,34 @@ function setupDebugControls() {
   });
 }
 
+function showChoiceBox(speaker, prompt, btn1Text, btn1Callback, btn2Text = null, btn2Callback = null) {
+  uiActionInProgress = true;
+  controls.unlock();
+  crosshair.classList.add('hidden');
+
+  choiceSpeaker.textContent = speaker;
+  choicePrompt.textContent = prompt;
+  
+  choiceBtn1.textContent = btn1Text;
+  choiceBtn1.onclick = btn1Callback;
+
+  if (btn2Text) {
+    choiceBtn2.textContent = btn2Text;
+    choiceBtn2.onclick = btn2Callback;
+    choiceBtn2.classList.remove('hidden');
+  } else {
+    choiceBtn2.classList.add('hidden');
+  }
+  
+  choiceBox.classList.add('active');
+}
+
+function hideChoiceBox() {
+  choiceBox.classList.remove('active');
+  crosshair.classList.remove('hidden');
+  controls.lock();
+}
+
 function interact(object) {
   if (!gameInProgress || uiActionInProgress) return;
   dialogueBox.classList.remove('active');
@@ -315,102 +343,91 @@ function interact(object) {
   
   const dialogue = dialogueSet[dialogueKey];
   if (!dialogue) return;
-
-  uiActionInProgress = true;
-  controls.unlock();
-  crosshair.classList.add('hidden');
-  choiceBtn2.classList.remove('hidden');
   
   // Lvl 1 Clue
   if (currentLevel === 1 && dialogueKey === 'david' && dialogue.text_lvl1) {
-    choiceSpeaker.textContent = dialogue.name;
-    choicePrompt.textContent = dialogue.text_lvl1;
-    choiceBtn1.textContent = dialogue.choice1_lvl1;
-    choiceBtn2.classList.add('hidden');
-    
-    choiceBtn1.onclick = () => handleChoice('david_quest', dialogueKey, 1);
-    choiceBtn2.onclick = null;
-    
-    choiceBox.classList.add('active');
+    showChoiceBox(
+      dialogue.name,
+      dialogue.text_lvl1,
+      dialogue.choice1_lvl1,
+      () => handleChoice('david_quest', dialogueKey, 1)
+    );
     return;
   }
 
   // Lvl 2 Water
   if (currentLevel === 2 && playerInventory.water > 0 && dialogue.water_prompt) {
-    choiceSpeaker.textContent = dialogue.name;
-    choicePrompt.textContent = dialogue.water_prompt;
-    choiceBtn1.textContent = dialogue.water_choice1;
-    choiceBtn2.textContent = dialogue.water_choice2;
-
-    choiceBtn1.onclick = () => handleChoice('water', dialogueKey, 1);
-    choiceBtn2.onclick = () => handleChoice('water', dialogueKey, 2);
-    
-    choiceBox.classList.add('active');
+    showChoiceBox(
+      dialogue.name,
+      dialogue.water_prompt,
+      dialogue.water_choice1,
+      () => handleChoice('water', dialogueKey, 1),
+      dialogue.water_choice2,
+      () => handleChoice('water', dialogueKey, 2)
+    );
     return;
   }
 
   // Lvl 3 Lollipop
   if (currentLevel === 3 && playerInventory.lollipop > 0 && dialogue.lollipop_prompt) {
-    choiceSpeaker.textContent = dialogue.name;
-    choicePrompt.textContent = dialogue.lollipop_prompt;
-    choiceBtn1.textContent = dialogue.lollipop_choice1;
-    choiceBtn2.textContent = dialogue.lollipop_choice2;
-
-    choiceBtn1.onclick = () => handleChoice('lollipop', dialogueKey, 1);
-    choiceBtn2.onclick = () => handleChoice('lollipop', dialogueKey, 2);
-    
-    choiceBox.classList.add('active');
+    showChoiceBox(
+      dialogue.name,
+      dialogue.lollipop_prompt,
+      dialogue.lollipop_choice1,
+      () => handleChoice('lollipop', dialogueKey, 1),
+      dialogue.lollipop_choice2,
+      () => handleChoice('lollipop', dialogueKey, 2)
+    );
     return;
   }
   
   // Lvl 4 Door
   if (currentLevel === 4 && dialogue.door_prompt) {
-    choiceSpeaker.textContent = dialogue.name;
-    choicePrompt.textContent = dialogue.door_prompt;
-    choiceBtn1.textContent = dialogue.door_choice1;
-    choiceBtn2.textContent = dialogue.door_choice2;
-
-    choiceBtn1.onclick = () => handleChoice('door', dialogueKey, 1);
-    choiceBtn2.onclick = () => handleChoice('door', dialogueKey, 2);
-    
-    choiceBox.classList.add('active');
+    showChoiceBox(
+      dialogue.name,
+      dialogue.door_prompt,
+      dialogue.door_choice1,
+      () => handleChoice('door', dialogueKey, 1),
+      dialogue.door_choice2,
+      () => handleChoice('door', dialogueKey, 2)
+    );
     return;
   }
 
   // Lvl 5 Carry
   if (currentLevel === 5 && dialogue.carry_prompt) {
-    choiceSpeaker.textContent = dialogue.name;
-    choicePrompt.textContent = dialogue.carry_prompt;
-    choiceBtn1.textContent = dialogue.carry_choice1;
-    choiceBtn2.textContent = dialogue.carry_choice2;
-
-    choiceBtn1.onclick = () => handleChoice('carry', dialogueKey, 1);
-    choiceBtn2.onclick = () => handleChoice('carry', dialogueKey, 2);
-    
-    choiceBox.classList.add('active');
+    showChoiceBox(
+      dialogue.name,
+      dialogue.carry_prompt,
+      dialogue.carry_choice1,
+      () => handleChoice('carry', dialogueKey, 1),
+      dialogue.carry_choice2,
+      () => handleChoice('carry', dialogueKey, 2)
+    );
     return;
   }
   
   // 6. DEFAULT DIALOGUE (if no choices apply)
-  uiActionInProgress = false; 
-  controls.lock(); 
-  crosshair.classList.remove('hidden');
-
-  dialogueSpeaker.textContent = dialogue.name;
-  
-  let textToShow = dialogue.text;
   if (currentLevel === 1 && dialogue.text_lvl1 && dialogueKey !== 'david') {
-      textToShow = dialogue.text_lvl1;
+    showChoiceBox(
+      dialogue.name,
+      dialogue.text_lvl1,
+      dialogue.clue_choice1,
+      () => handleChoice('clue_ack', dialogueKey, 1)
+    );
+    return;
   }
-  
-  dialogueText.textContent = textToShow || "(The character is silent)";
+
+  // 7. DEFAULT DIALOGUE
+  dialogueSpeaker.textContent = dialogue.name;
+  dialogueText.textContent = dialogue.text || "(The character is silent)";
   dialogueBox.classList.add('active');
 }
 
 function handleChoice(type, dialogueKey, choice) {
-  choiceBox.classList.remove('active');
-  crosshair.classList.remove('hidden');
-  controls.lock();
+  hideChoiceBox();
+
+  if (type === 'clue_ack') { return; }
 
   // --- Lvl 1 Clue ---
   if (type === 'david_quest') {

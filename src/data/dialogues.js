@@ -13,6 +13,7 @@ export const DIALOGUES = {
       name: "AXTON",
       // Lvl 1 Clue
       text_lvl1: "That guy, David... he wants to clear the way with brute force. Strong, sure — he’s a trainer, after all. But muscle alone won’t save us down here.",
+      clue_choice1: "[1] I see.",
       // Lvl 2 Water
       water_prompt: "I can't breathe... the dust... water...",
       water_choice1: "[1] Give water.",
@@ -60,6 +61,7 @@ export const DIALOGUES = {
       name: "LEXA",
       // Lvl 1 Clue
       text_lvl1: "I saw that woman — Martha… She moved fast, helped a man before the crash. The way she held his arm... She knows medicine... she’s a nurse. I can see it.",
+      clue_choice1: "[1] I see.",
       // Lvl 2 Water
       water_prompt: "I don't feel good... my head is spinning… is my astronaut okay?...",
       water_choice1: "[1] Give water.",
@@ -83,6 +85,7 @@ export const DIALOGUES = {
       name: "MARTHA",
       // Lvl 1 Clue
       text_lvl1: "Poor Lexa... that girl’s vision is too sharp for this world. She keeps staring into the dark. Says she sees things we don’t. Maybe she’s right... maybe she’s not.",
+      clue_choice1: "[1] I see.",
       // Lvl 2 Water
       water_prompt: "Don't waste it on me... save her... I beg you, give it to the child…",
       water_choice1: "[1] Give water.",
@@ -106,6 +109,7 @@ export const DIALOGUES = {
       name: "MAYA",
       // Lvl 1 Clue
       text_lvl1: "Axton… that engineer… he tried to help me earlier. He’s not just muscles — he’s smart, calculating. If anyone can rebuild something down here, it’s him.",
+      clue_choice1: "[1] I see.",
       // Lvl 2 Water
       water_prompt: "My leg... ugh... I'm a med student, but I can't even look at it…",
       water_choice1: "[1] Give water.",
@@ -127,7 +131,8 @@ export const DIALOGUES = {
     },
     lexa_toy: {
       name: "ASTRONAUT TOY",
-      text: "Lexa's astronaut... She was holding it so tightly."
+      text_lvl1: "Lexa's astronaut... She was holding it so tightly.",
+      clue_choice1: "[1] I see."
     }
   }
 };
