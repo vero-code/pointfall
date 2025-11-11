@@ -122,17 +122,24 @@ export class CrashedMetro {
         name: "Drinking",
         path: "/models/animations/Martha-Suzie-Drinking.glb",
       },
+      {
+        name: "Walking",
+        path: "/models/animations/Martha-Suzie-Walking.glb",
+      },
+      {
+        name: "CrouchingIdle",
+        path: "/models/animations/Martha-Suzie-Crouching-Idle.glb",
+      },
     ];
 
     animationsToLoad.forEach((anim) => {
-      this.gltfLoader.load(anim.path, (gltf) => {
-        const clip = gltf.animations[0];
-        if (clip) {
-          this.animationClips.set(anim.name, clip);
-          console.log(`Loaded animation clip: ${anim.name}`);
-        }
-      });
+    this.gltfLoader.load(anim.path, (gltf) => {
+      const clip = gltf.animations[0];
+      if (clip) {
+        this.animationClips.set(anim.name, clip);
+      }
     });
+  });
   }
 
   createSurvivors() {
@@ -255,50 +262,72 @@ export class CrashedMetro {
   }
 
   playAnimationFor(
-    characterName,
-    clipName,
-    loop = THREE.LoopOnce,
-    onFinishedCallback = null
-  ) {
-    const character = this.survivorsMap.get(characterName);
-    if (!character || !character.mixer) {
-      console.error(`Character or mixer not found for: ${characterName}`);
-      if (onFinishedCallback) onFinishedCallback();
-      return;
-    }
-
-    let clip = THREE.AnimationClip.findByName(
-      character.model.animations,
-      clipName
-    );
-    if (!clip) {
-      clip = this.animationClips.get(clipName);
-    }
-
-    if (!clip) {
-      console.error(
-        `Animation clip "${clipName}" not found anywhere for ${characterName}`
-      );
-      if (onFinishedCallback) onFinishedCallback();
-      return;
-    }
-
-    character.mixer.stopAllAction(); 
-    const action = character.mixer.clipAction(clip);
-    action.setLoop(loop);
-    action.clampWhenFinished = true;
-    action.reset().fadeIn(0.5).play();
-
-    if (onFinishedCallback) {
-      const listener = (e) => {
-        if (e.action === action) {
-          character.mixer.removeEventListener("finished", listener);
-          onFinishedCallback();
-        }
-      };
-      character.mixer.addEventListener("finished", listener);
-    }
+  characterName,
+  clipName,
+  loop = THREE.LoopOnce,
+  onFinishedCallback = null
+) {
+  const character = this.survivorsMap.get(characterName);
+  if (!character || !character.mixer) {
+    console.error(`Character or mixer not found for: ${characterName}`);
+    if (onFinishedCallback) onFinishedCallback();
+    return;
   }
+
+  let clip = THREE.AnimationClip.findByName(
+    character.model.animations,
+    clipName
+  );
+  if (!clip) {
+    clip = this.animationClips.get(clipName);
+  }
+
+  if (!clip) {
+    console.error(
+      `Animation clip "${clipName}" not found anywhere for ${characterName}`
+    );
+    if (onFinishedCallback) onFinishedCallback();
+    return;
+  }
+
+  console.log(`Playing animation "${clipName}":`, {
+    duration: clip.duration,
+    name: clip.name,
+    uuid: clip.uuid,
+    tracks: clip.tracks.length,
+    loop: loop
+  });
+
+  const uniqueClip = clip.clone();
+  uniqueClip.name = clipName;
+  
+  character.mixer.stopAllAction();
+  
+  const action = character.mixer.clipAction(uniqueClip);
+  action.setLoop(loop);
+  action.clampWhenFinished = (loop === THREE.LoopOnce);
+  action.reset();
+  action.play();
+  
+  console.log(`Action started:`, {
+    isRunning: action.isRunning(),
+    isScheduled: action.isScheduled(),
+    time: action.time,
+    weight: action.weight,
+    clipName: uniqueClip.name
+  });
+
+  if (onFinishedCallback && loop === THREE.LoopOnce) { 
+    const listener = (e) => {
+      if (e.action === action) { 
+        character.mixer.removeEventListener("finished", listener);
+        console.log(`[Animation finished] "${clipName}" completed`);
+        onFinishedCallback();
+      }
+    };
+    character.mixer.addEventListener("finished", listener);
+  }
+}
 
   moveCharacterTo(characterName, targetPosition, duration = 2000) {
     const character = this.survivorsMap.get(characterName);

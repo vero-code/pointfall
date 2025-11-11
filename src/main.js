@@ -406,12 +406,29 @@ function handleChoice(type, dialogueKey, choice) {
       uiActionInProgress = true;
 
       activeScene.playAnimationFor('martha', 'Drinking', THREE.LoopOnce, () => {
+        const lexaPosition = { x: 0.3, y: 0, z: -1.4 };
+
+        const character = activeScene.survivorsMap.get('martha');
+        if (character && character.model) {
+          const dx = lexaPosition.x - character.model.position.x;
+          const dz = lexaPosition.z - character.model.position.z;
+          const targetAngle = Math.atan2(dx, dz);
+          character.model.rotation.y = targetAngle;
+        }
+
+        activeScene.playAnimationFor('martha', 'Walking', THREE.LoopRepeat);
+        activeScene.moveCharacterTo('martha', lexaPosition, 3000);
+
         playerInventory.lollipop = 1; // Get lollipop
+
         setTimeout(() => {
+          activeScene.playAnimationFor('martha', 'CrouchingIdle', THREE.LoopRepeat);
+          console.log('[Walking stopped] Character reached destination, now crouching.');
+
           updateInventoryUI();
           updateObjective(3); // Go to Level 3
           uiActionInProgress = false;
-        }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY_ANIMATION);
+        }, 3100);
       });
       
     } else {
