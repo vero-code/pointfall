@@ -28,7 +28,7 @@ export const DIALOGUES = {
       // Lvl 5 Carry
       carry_prompt: "Let's go, quickly... before it closes again.",
       carry_choice1: "[1] Ask for help with MAYA.",
-      carry_choice2: "[2] Go through the door.",
+      carry_choice2: "[2] (Nevermind)",
       // Default
       text: "(Coughing violently from the dust)"
     },
@@ -52,7 +52,7 @@ export const DIALOGUES = {
       // Lvl 5 Carry
       carry_prompt: "Yes, good thing we didn't break the door. A head can be useful sometimes...",
       carry_choice1: "[1] Ask for help with MAYA.",
-      carry_choice2: "[2] Go through the door.",
+      carry_choice2: "[2] (Nevermind)",
       // Default
       text: "Find a doctor for my daughter! Please!"
     },
@@ -75,7 +75,7 @@ export const DIALOGUES = {
       // Lvl 5 Carry
       carry_prompt: "It's getting closer, let's get out of this horrible place...",
       carry_choice1: "[1] Ask for help with MAYA.",
-      carry_choice2: "[2] Go through the door.",
+      carry_choice2: "[2] (Nevermind)",
       // Default
       text: "My astronaut..."
     },
@@ -98,7 +98,7 @@ export const DIALOGUES = {
       // Lvl 5 Carry
       carry_prompt: "This is our chance to get out... But what about Maya, we need to help her!",
       carry_choice1: "[1] Ask for help with MAYA.",
-      carry_choice2: "[2] Go through the door.",
+      carry_choice2: "[2] (Nevermind)",
       // Default
       text: "Save the child..."
     },
@@ -121,7 +121,7 @@ export const DIALOGUES = {
       // Lvl 5 Carry
       carry_prompt: "I want to go with you, but my leg hurts like crazy. Help me!",
       carry_choice1: "[1] I'll help you. Grab me!",
-      carry_choice2: "[2] Go through the door.",
+      carry_choice2: "[2] (Nevermind)",
       // Default
       text: "My leg... it hurts so much...",
     },

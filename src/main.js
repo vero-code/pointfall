@@ -304,7 +304,7 @@ function setupDebugControls() {
 }
 
 function interact(object) {
-  if (!gameInProgress) return;
+  if (!gameInProgress || uiActionInProgress) return;
   dialogueBox.classList.remove('active');
 
   const dialogueKey = object.userData.dialogue;
@@ -431,10 +431,12 @@ function handleChoice(type, dialogueKey, choice) {
 
     if (dialogueKey === 'martha') {
       // RIGHT CHOICE
+      uiActionInProgress = true;
       playerInventory.lollipop = 1; // Get lollipop
       setTimeout(() => {
         updateInventoryUI();
         updateObjective(3); // Go to Level 3
+        uiActionInProgress = false;
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
     } else {
       runBadEnding(ENDINGS.WATER_WRONG.title, ENDINGS.WATER_WRONG.subtitle);
@@ -451,8 +453,10 @@ function handleChoice(type, dialogueKey, choice) {
 
     if (dialogueKey === 'axton') {
       // RIGHT CHOICE
+      uiActionInProgress = true;
       setTimeout(() => {
         updateObjective(4); // Go to Level 4
+        uiActionInProgress = false;
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
     } else {
       runBadEnding(ENDINGS.LOLLIPOP_WRONG.title, ENDINGS.LOLLIPOP_WRONG.subtitle);
@@ -466,8 +470,10 @@ function handleChoice(type, dialogueKey, choice) {
 
     if (dialogueKey === 'axton') {
       // RIGHT CHOICE
+      uiActionInProgress = true;
       setTimeout(() => {
         updateObjective(5); // Go to Level 5
+        uiActionInProgress = false;
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
     } else {
       runBadEnding(ENDINGS.DOOR_WRONG.title, ENDINGS.DOOR_WRONG.subtitle);
@@ -531,7 +537,7 @@ function runGoodEnding(title, subtitle) {
 
 function checkInteractions() {
   // Don't show the [E] prompt if a choice is open or the game is over
-  if (choiceBox.classList.contains('active') || !gameInProgress) {
+  if (choiceBox.classList.contains('active') || !gameInProgress || uiActionInProgress) {
     interactionPrompt.classList.remove('active');
     currentInteractable = null;
     return;
