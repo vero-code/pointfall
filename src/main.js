@@ -141,20 +141,20 @@ function init() {
   });
 
   // Uncomment -> Show start screen
-  //startScreen.classList.remove('hidden');
+  startScreen.classList.remove('hidden');
 
   // Uncomment -> Click on "Start" button
-  // startButton.addEventListener('click', () => {
-  //   startScreen.classList.add('hidden');
-  //   controls.lock();
-  // });
+  startButton.addEventListener('click', () => {
+    startScreen.classList.add('hidden');
+    controls.lock();
+  });
 
   // Comment out -> Click to lock (if out of focus)
-  renderer.domElement.addEventListener('click', () => {
-    if (gameInProgress && !controls.isLocked && startScreen.classList.contains('hidden')) {
-      controls.lock();
-    }
-  });
+  // renderer.domElement.addEventListener('click', () => {
+  //   if (gameInProgress && !controls.isLocked && startScreen.classList.contains('hidden')) {
+  //     controls.lock();
+  //   }
+  // });
 
   // Load initial scene
   loadCrashedScene();
