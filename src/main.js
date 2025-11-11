@@ -3,7 +3,7 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import { CrashedMetro } from './scenes/CrashedMetro.js';
 import { DIALOGUES, OBJECTIVES } from './data/dialogues.js';
 import { ENDINGS } from './data/text.js';
-import { GAME_SETTINGS, PLAYER_SETTINGS, STARTING_STATE, SCENE_SETTINGS } from './config.js';
+import { GAME_SETTINGS, PLAYER_SETTINGS, STARTING_STATE, SCENE_SETTINGS, WORLD_BOUNDS } from './config.js';
 import './style.css';
 
 // Game state
@@ -582,6 +582,9 @@ function animate() {
   }
   
   if (controls.isLocked) {
+    // Display coordinates
+    // console.log(camera.position);
+
     velocity.x -= velocity.x * PLAYER_SETTINGS.MOVEMENT_DAMPING * delta;
     velocity.z -= velocity.z * PLAYER_SETTINGS.MOVEMENT_DAMPING * delta;
     
@@ -591,10 +594,21 @@ function animate() {
     
     if (moveForward || moveBackward) velocity.z -= direction.z * player.speed * delta;
     if (moveLeft || moveRight) velocity.x -= direction.x * player.speed * delta;
-    
+
     controls.moveRight(-velocity.x * delta);
     controls.moveForward(-velocity.z * delta);
-    
+
+    if (camera.position.z < WORLD_BOUNDS.MIN_Z) {
+      camera.position.z = WORLD_BOUNDS.MIN_Z;
+    } else if (camera.position.z > WORLD_BOUNDS.MAX_Z) {
+      camera.position.z = WORLD_BOUNDS.MAX_Z;
+    }
+
+    if (camera.position.x < WORLD_BOUNDS.MIN_X) {
+      camera.position.x = WORLD_BOUNDS.MIN_X;
+    } else if (camera.position.x > WORLD_BOUNDS.MAX_X) {
+      camera.position.x = WORLD_BOUNDS.MAX_X;
+    }
     checkInteractions();
   }
   
