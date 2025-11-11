@@ -1,3 +1,4 @@
+// src/main.js
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { CrashedMetro } from './scenes/CrashedMetro.js';
@@ -257,52 +258,6 @@ function setupInput() {
   });
 }
 
-function setupDebugControls() {
-  let autoTransition = false;
-  
-  const loadNormalBtn = document.getElementById('load-normal');
-  const loadCrashedBtn = document.getElementById('load-crashed');
-  const toggleAutoBtn = document.getElementById('toggle-auto');
-  
-  if (loadNormalBtn) {
-    loadNormalBtn.addEventListener('click', () => {
-      loadNormalScene();
-      if (controls.isLocked === false) {
-        controls.lock();
-      }
-    });
-  }
-  
-  if (loadCrashedBtn) {
-    loadCrashedBtn.addEventListener('click', () => {
-      loadCrashedScene();
-      if (controls.isLocked === false) {
-        controls.lock();
-      }
-    });
-  }
-  
-  if (toggleAutoBtn) {
-    toggleAutoBtn.textContent = 'Auto: OFF';
-    toggleAutoBtn.classList.add('off');
-    
-    toggleAutoBtn.addEventListener('click', () => {
-      autoTransition = !autoTransition;
-      toggleAutoBtn.textContent = `Auto: ${autoTransition ? 'ON' : 'OFF'}`;
-      toggleAutoBtn.classList.toggle('off', !autoTransition);
-    });
-  }
-  
-  // Expose to animate function
-  window.autoTransition = autoTransition;
-  
-  // Update getter
-  Object.defineProperty(window, 'autoTransition', {
-    get: () => autoTransition,
-    set: (val) => autoTransition = val
-  });
-}
-
 function showChoiceBox(speaker, prompt, btn1Text, btn1Callback, btn2Text = null, btn2Callback = null) {
   uiActionInProgress = true;
   controls.unlock();
@@ -449,12 +404,16 @@ function handleChoice(type, dialogueKey, choice) {
     if (dialogueKey === 'martha') {
       // RIGHT CHOICE
       uiActionInProgress = true;
-      playerInventory.lollipop = 1; // Get lollipop
-      setTimeout(() => {
-        updateInventoryUI();
-        updateObjective(3); // Go to Level 3
-        uiActionInProgress = false;
-      }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
+
+      activeScene.playAnimationFor('martha', 'Drinking', THREE.LoopOnce, () => {
+        playerInventory.lollipop = 1; // Get lollipop
+        setTimeout(() => {
+          updateInventoryUI();
+          updateObjective(3); // Go to Level 3
+          uiActionInProgress = false;
+        }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY_ANIMATION);
+      });
+      
     } else {
       runBadEnding(ENDINGS.WATER_WRONG.title, ENDINGS.WATER_WRONG.subtitle);
     }
