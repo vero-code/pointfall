@@ -447,7 +447,15 @@ if (type === 'water') {
       uiActionInProgress = true;
 
       activeScene.playAnimationFor('axton', 'StandingUp', THREE.LoopOnce, () => {
-        activeScene.playAnimationFor('lexa', 'Pointing', THREE.LoopOnce, () => {
+        activeScene.playAnimationFor('david', 'StandingUp_David', THREE.LoopOnce);
+        activeScene.playAnimationFor('martha', 'StandingUp_Suzie', THREE.LoopOnce);
+
+        const lexaCharacter = activeScene.survivorsMap.get('lexa');
+        if (lexaCharacter && lexaCharacter.model) {
+          lexaCharacter.model.rotation.y = -Math.PI / 2;
+        }
+
+        activeScene.playAnimationFor('lexa', 'Pointing', THREE.LoopRepeat, () => {
           updateObjective(4); // Go to Level 4
           uiActionInProgress = false;
         });
