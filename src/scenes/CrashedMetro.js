@@ -15,11 +15,85 @@ export class CrashedMetro {
     this.survivorsMap = new Map();
     this.animationClips = new Map();
     this.tweenGroup = new TWEEN.Group();
+    this.exitDoor = null;
+    this.doorSign = null;
   }
 
   update(delta) {
     for (const m of this.mixers) m.update(delta);
     this.tweenGroup.update();
+  }
+
+  /**
+   * Creating 2D text in a 3D world.
+   */
+  createTextSprite(text, position, fontSize = 40, width = 512, height = 128) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+
+    context.fillStyle = "rgba(20, 20, 20, 0.9)";
+    context.fillRect(0, 0, width, height);
+    context.strokeStyle = "rgba(200, 200, 200, 0.8)";
+    context.lineWidth = 5;
+    context.strokeRect(0, 0, width, height);
+
+    context.font = `bold ${fontSize}px Arial`;
+    context.fillStyle = "rgba(255, 50, 50, 1.0)";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(text, width / 2, height / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(material);
+    sprite.position.copy(position);
+
+    sprite.scale.set(1.6, 0.4, 1.0);
+    return sprite;
+  }
+
+  /**
+   * Creates a door at the end of the train car.
+   */
+  createDoor() {
+    const doorGeo = new THREE.BoxGeometry(1.5, 2.5, 0.1);
+    const doorMat = new THREE.MeshStandardMaterial({
+      color: 0x222222,
+      roughness: 0.8,
+      metalness: 0.5,
+    });
+    this.exitDoor = new THREE.Mesh(doorGeo, doorMat);
+
+    this.exitDoor.position.set(0, 1.25, -5.9);
+
+    this.exitDoor.userData.dialogue = "door";
+    this.exitDoor.userData.isInteractable = false;
+
+    this.exitDoor.visible = false;
+    this.scene.add(this.exitDoor);
+
+    // Create a sign
+    const signPosition = new THREE.Vector3(0, 2.85, -5.85);
+    this.doorSign = this.createTextSprite(
+      "Locked (electric).",
+      signPosition
+    );
+
+    this.doorSign.visible = false;
+    this.scene.add(this.doorSign);
+
+    this.survivors.push(this.exitDoor);
+  }
+
+  showDoor() {
+    if (this.exitDoor) {
+      this.exitDoor.visible = true;
+    }
+    if (this.doorSign) {
+      this.doorSign.visible = true;
+    }
   }
 
   create() {
@@ -28,6 +102,7 @@ export class CrashedMetro {
     this.loadAnimations();
     this.createSurvivors();
     this.createLighting();
+    this.createDoor();
   }
 
   createEnvironment() {
@@ -307,14 +382,6 @@ export class CrashedMetro {
       return;
     }
 
-    console.log(`Playing animation "${clipName}":`, {
-      duration: clip.duration,
-      name: clip.name,
-      uuid: clip.uuid,
-      tracks: clip.tracks.length,
-      loop: loop,
-    });
-
     character.mixer.stopAllAction();
 
     const uniqueClip = clip.clone();
@@ -326,19 +393,10 @@ export class CrashedMetro {
     action.reset();
     action.play();
 
-    console.log(`Action started:`, {
-      isRunning: action.isRunning(),
-      isScheduled: action.isScheduled(),
-      time: action.time,
-      weight: action.weight,
-      clipName: uniqueClip.name,
-    });
-
     if (onFinishedCallback && loop === THREE.LoopOnce) {
       const listener = (e) => {
         if (e.action === action) {
           character.mixer.removeEventListener("finished", listener);
-          console.log(`[Animation finished] "${clipName}" completed`);
           onFinishedCallback();
         }
       };
@@ -366,7 +424,6 @@ export class CrashedMetro {
       )
       .easing(TWEEN.Easing.Quadratic.InOut)
       .onComplete(() => {
-        console.log(`[Movement complete] ${characterName} reached destination`);
         if (onComplete) onComplete();
       })
       .start();

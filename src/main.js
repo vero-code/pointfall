@@ -422,7 +422,6 @@ if (type === 'water') {
       
       activeScene.moveCharacterTo('martha', lexaPosition, 3000, () => {
         activeScene.playAnimationFor('martha', 'CrouchingIdle', THREE.LoopRepeat);
-        console.log('[Movement complete] Martha is now crouching at destination.');
         updateInventoryUI();
         updateObjective(3); // Go to Level 3
         uiActionInProgress = false;
@@ -447,7 +446,6 @@ if (type === 'water') {
       uiActionInProgress = true;
 
       activeScene.playAnimationFor('axton', 'StandingUp', THREE.LoopOnce, () => {
-        activeScene.playAnimationFor('david', 'StandingUp_David', THREE.LoopOnce);
         activeScene.playAnimationFor('martha', 'StandingUp_Suzie', THREE.LoopOnce);
 
         const lexaCharacter = activeScene.survivorsMap.get('lexa');
@@ -455,7 +453,10 @@ if (type === 'water') {
           lexaCharacter.model.rotation.y = -Math.PI / 2;
         }
 
-        activeScene.playAnimationFor('lexa', 'Pointing', THREE.LoopRepeat, () => {
+        activeScene.playAnimationFor('lexa', 'Pointing', THREE.LoopRepeat);
+
+        activeScene.playAnimationFor('david', 'StandingUp_David', THREE.LoopOnce, () => {
+          activeScene.showDoor();
           updateObjective(4); // Go to Level 4
           uiActionInProgress = false;
         });
