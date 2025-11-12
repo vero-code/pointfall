@@ -14,11 +14,12 @@ export class CrashedMetro {
     this.mixers = [];
     this.survivorsMap = new Map();
     this.animationClips = new Map();
+    this.tweenGroup = new TWEEN.Group();
   }
 
   update(delta) {
     for (const m of this.mixers) m.update(delta);
-    TWEEN.update();
+    this.tweenGroup.update();
   }
 
   create() {
@@ -133,13 +134,13 @@ export class CrashedMetro {
     ];
 
     animationsToLoad.forEach((anim) => {
-    this.gltfLoader.load(anim.path, (gltf) => {
-      const clip = gltf.animations[0];
-      if (clip) {
-        this.animationClips.set(anim.name, clip);
-      }
+      this.gltfLoader.load(anim.path, (gltf) => {
+        const clip = gltf.animations[0];
+        if (clip) {
+          this.animationClips.set(anim.name, clip);
+        }
+      });
     });
-  });
   }
 
   createSurvivors() {
@@ -262,86 +263,96 @@ export class CrashedMetro {
   }
 
   playAnimationFor(
-  characterName,
-  clipName,
-  loop = THREE.LoopOnce,
-  onFinishedCallback = null
-) {
-  const character = this.survivorsMap.get(characterName);
-  if (!character || !character.mixer) {
-    console.error(`Character or mixer not found for: ${characterName}`);
-    if (onFinishedCallback) onFinishedCallback();
-    return;
-  }
-
-  let clip = THREE.AnimationClip.findByName(
-    character.model.animations,
-    clipName
-  );
-  if (!clip) {
-    clip = this.animationClips.get(clipName);
-  }
-
-  if (!clip) {
-    console.error(
-      `Animation clip "${clipName}" not found anywhere for ${characterName}`
-    );
-    if (onFinishedCallback) onFinishedCallback();
-    return;
-  }
-
-  console.log(`Playing animation "${clipName}":`, {
-    duration: clip.duration,
-    name: clip.name,
-    uuid: clip.uuid,
-    tracks: clip.tracks.length,
-    loop: loop
-  });
-
-  const uniqueClip = clip.clone();
-  uniqueClip.name = clipName;
-  
-  character.mixer.stopAllAction();
-  
-  const action = character.mixer.clipAction(uniqueClip);
-  action.setLoop(loop);
-  action.clampWhenFinished = (loop === THREE.LoopOnce);
-  action.reset();
-  action.play();
-  
-  console.log(`Action started:`, {
-    isRunning: action.isRunning(),
-    isScheduled: action.isScheduled(),
-    time: action.time,
-    weight: action.weight,
-    clipName: uniqueClip.name
-  });
-
-  if (onFinishedCallback && loop === THREE.LoopOnce) { 
-    const listener = (e) => {
-      if (e.action === action) { 
-        character.mixer.removeEventListener("finished", listener);
-        console.log(`[Animation finished] "${clipName}" completed`);
-        onFinishedCallback();
-      }
-    };
-    character.mixer.addEventListener("finished", listener);
-  }
-}
-
-  moveCharacterTo(characterName, targetPosition, duration = 2000) {
+    characterName,
+    clipName,
+    loop = THREE.LoopOnce,
+    onFinishedCallback = null
+  ) {
     const character = this.survivorsMap.get(characterName);
-    if (!character) {
-      console.error(`Character model not found for: ${characterName}`);
+    if (!character || !character.mixer) {
+      console.error(`Character or mixer not found for: ${characterName}`);
+      if (onFinishedCallback) onFinishedCallback();
       return;
     }
 
-    new TWEEN.Tween(character.model.position)
+    let clip = THREE.AnimationClip.findByName(
+      character.model.animations,
+      clipName
+    );
+    if (!clip) {
+      clip = this.animationClips.get(clipName);
+    }
+
+    if (!clip) {
+      console.error(
+        `Animation clip "${clipName}" not found anywhere for ${characterName}`
+      );
+      if (onFinishedCallback) onFinishedCallback();
+      return;
+    }
+
+    console.log(`Playing animation "${clipName}":`, {
+      duration: clip.duration,
+      name: clip.name,
+      uuid: clip.uuid,
+      tracks: clip.tracks.length,
+      loop: loop,
+    });
+
+    character.mixer.stopAllAction();
+
+    const uniqueClip = clip.clone();
+    uniqueClip.name = clipName;
+
+    const action = character.mixer.clipAction(uniqueClip);
+    action.setLoop(loop);
+    action.clampWhenFinished = loop === THREE.LoopOnce;
+    action.reset();
+    action.play();
+
+    console.log(`Action started:`, {
+      isRunning: action.isRunning(),
+      isScheduled: action.isScheduled(),
+      time: action.time,
+      weight: action.weight,
+      clipName: uniqueClip.name,
+    });
+
+    if (onFinishedCallback && loop === THREE.LoopOnce) {
+      const listener = (e) => {
+        if (e.action === action) {
+          character.mixer.removeEventListener("finished", listener);
+          console.log(`[Animation finished] "${clipName}" completed`);
+          onFinishedCallback();
+        }
+      };
+      character.mixer.addEventListener("finished", listener);
+    }
+  }
+
+  moveCharacterTo(
+    characterName,
+    targetPosition,
+    duration = 2000,
+    onComplete = null
+  ) {
+    const character = this.survivorsMap.get(characterName);
+    if (!character) {
+      console.error(`Character model not found for: ${characterName}`);
+      if (onComplete) onComplete();
+      return;
+    }
+
+    new TWEEN.Tween(character.model.position, this.tweenGroup)
       .to(
         { x: targetPosition.x, y: targetPosition.y, z: targetPosition.z },
         duration
       )
       .easing(TWEEN.Easing.Quadratic.InOut)
+      .onComplete(() => {
+        console.log(`[Movement complete] ${characterName} reached destination`);
+        if (onComplete) onComplete();
+      })
       .start();
   }
 

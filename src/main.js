@@ -395,47 +395,45 @@ function handleChoice(type, dialogueKey, choice) {
   }
 
   // --- Lvl 2 Water ---
-  if (type === 'water') {
-    if (choice === 2) return; // Player saved the water
+if (type === 'water') {
+  if (choice === 2) return; // Player saved the water
+  
+  playerInventory.water = 0;
+  updateInventoryUI();
+  
+  if (dialogueKey === 'martha') {
+    // RIGHT CHOICE
+    uiActionInProgress = true;
     
-    playerInventory.water = 0;
-    updateInventoryUI();
-
-    if (dialogueKey === 'martha') {
-      // RIGHT CHOICE
-      uiActionInProgress = true;
-
-      activeScene.playAnimationFor('martha', 'Drinking', THREE.LoopOnce, () => {
-        const lexaPosition = { x: 0.3, y: 0, z: -1.4 };
-
-        const character = activeScene.survivorsMap.get('martha');
-        if (character && character.model) {
-          const dx = lexaPosition.x - character.model.position.x;
-          const dz = lexaPosition.z - character.model.position.z;
-          const targetAngle = Math.atan2(dx, dz);
-          character.model.rotation.y = targetAngle;
-        }
-
-        activeScene.playAnimationFor('martha', 'Walking', THREE.LoopRepeat);
-        activeScene.moveCharacterTo('martha', lexaPosition, 3000);
-
-        playerInventory.lollipop = 1; // Get lollipop
-
-        setTimeout(() => {
-          activeScene.playAnimationFor('martha', 'CrouchingIdle', THREE.LoopRepeat);
-          console.log('[Walking stopped] Character reached destination, now crouching.');
-
-          updateInventoryUI();
-          updateObjective(3); // Go to Level 3
-          uiActionInProgress = false;
-        }, 3100);
-      });
+    activeScene.playAnimationFor('martha', 'Drinking', THREE.LoopOnce, () => {
+      const lexaPosition = { x: 0.3, y: 0, z: -1.4 };
+      const character = activeScene.survivorsMap.get('martha');
       
-    } else {
-      runBadEnding(ENDINGS.WATER_WRONG.title, ENDINGS.WATER_WRONG.subtitle);
-    }
-    return;
+      if (character && character.model) {
+        const dx = lexaPosition.x - character.model.position.x;
+        const dz = lexaPosition.z - character.model.position.z;
+        const targetAngle = Math.atan2(dx, dz);
+        character.model.rotation.y = targetAngle;
+      }
+      
+      activeScene.playAnimationFor('martha', 'Walking', THREE.LoopOnce);
+      
+      playerInventory.lollipop = 1; // Get lollipop
+      
+      activeScene.moveCharacterTo('martha', lexaPosition, 3000, () => {
+        activeScene.playAnimationFor('martha', 'CrouchingIdle', THREE.LoopRepeat);
+        console.log('[Movement complete] Martha is now crouching at destination.');
+        updateInventoryUI();
+        updateObjective(3); // Go to Level 3
+        uiActionInProgress = false;
+      });
+    });
+    
+  } else {
+    runBadEnding(ENDINGS.WATER_WRONG.title, ENDINGS.WATER_WRONG.subtitle);
   }
+  return;
+}
 
   // --- Lvl 3 Lollipop ---
   if (type === 'lollipop') {
