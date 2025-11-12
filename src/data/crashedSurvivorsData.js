@@ -2,7 +2,7 @@
 export const survivorsData = [
   { 
     name: 'axton',
-    pos: [-1.5, 0, 2],
+    pos: [-1, 0, 2],
     type: 'model',
     modelPath: '/models/Axton-Leonard-Sitting-Idle.glb',
     // color: 0x6a4a8a,
