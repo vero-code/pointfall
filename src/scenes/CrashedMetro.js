@@ -134,7 +134,11 @@ export class CrashedMetro {
       {
         name: "StandingUp",
         path: "/models/animations/Axton-Leonard-Standing-Up.glb",
-        },
+      },
+      {
+        name: "Pointing",
+        path: "/models/animations/Lexa-Amy-Kneeling-Pointing.glb",
+      },
     ];
 
     animationsToLoad.forEach((anim) => {
