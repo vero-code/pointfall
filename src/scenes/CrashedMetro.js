@@ -96,6 +96,39 @@ export class CrashedMetro {
     }
   }
 
+  /**
+   * Updates existing door sign.
+   */
+  updateDoorSign(newText, color) {
+    if (!this.doorSign || !this.doorSign.material || !this.doorSign.material.map) {
+      console.error("Door sign sprite or its material/map is missing.");
+      return;
+    }
+
+    const canvas = this.doorSign.material.map.image;
+    const context = canvas.getContext("2d");
+    
+    const width = canvas.width;   // 512
+    const height = canvas.height; // 128
+    const fontSize = 40; // Must match with createTextSprite
+
+    context.clearRect(0, 0, width, height);
+
+    context.fillStyle = "rgba(20, 20, 20, 0.9)";
+    context.fillRect(0, 0, width, height);
+    context.strokeStyle = "rgba(200, 200, 200, 0.8)";
+    context.lineWidth = 5;
+    context.strokeRect(0, 0, width, height);
+
+    context.font = `bold ${fontSize}px Arial`;
+    context.fillStyle = color;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(newText, width / 2, height / 2);
+
+    this.doorSign.material.map.needsUpdate = true;
+  }
+
   create() {
     this.createEnvironment();
     this.createDebris();
@@ -215,7 +248,7 @@ export class CrashedMetro {
         path: "/models/animations/Lexa-Amy-Kneeling-Pointing.glb",
       },
       {
-        name: "StandingUp_Suzie",
+        name: "StandingUp_Martha",
         path: "/models/animations/Martha-Suzie-Standing-Up.glb",
       },
       {

@@ -446,7 +446,7 @@ if (type === 'water') {
       uiActionInProgress = true;
 
       activeScene.playAnimationFor('axton', 'StandingUp', THREE.LoopOnce, () => {
-        activeScene.playAnimationFor('martha', 'StandingUp_Suzie', THREE.LoopOnce);
+        activeScene.playAnimationFor('david', 'StandingUp_David', THREE.LoopOnce);
 
         const lexaCharacter = activeScene.survivorsMap.get('lexa');
         if (lexaCharacter && lexaCharacter.model) {
@@ -455,7 +455,7 @@ if (type === 'water') {
 
         activeScene.playAnimationFor('lexa', 'Pointing', THREE.LoopRepeat);
 
-        activeScene.playAnimationFor('david', 'StandingUp_David', THREE.LoopOnce, () => {
+        activeScene.playAnimationFor('martha', 'StandingUp_Martha', THREE.LoopOnce, () => {
           activeScene.showDoor();
           updateObjective(4); // Go to Level 4
           uiActionInProgress = false;
@@ -474,6 +474,11 @@ if (type === 'water') {
 
     if (dialogueKey === 'axton') {
       // RIGHT CHOICE
+      const newText = "Unlocked.";
+      const newColor = "rgba(50, 255, 50, 1.0)";
+
+      activeScene.updateDoorSign(newText, newColor);
+
       uiActionInProgress = true;
       setTimeout(() => {
         updateObjective(5); // Go to Level 5
