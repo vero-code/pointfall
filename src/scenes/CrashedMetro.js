@@ -131,6 +131,10 @@ export class CrashedMetro {
         name: "CrouchingIdle",
         path: "/models/animations/Martha-Suzie-Crouching-Idle.glb",
       },
+      {
+        name: "StandingUp",
+        path: "/models/animations/Axton-Leonard-Standing-Up.glb",
+        },
     ];
 
     animationsToLoad.forEach((anim) => {

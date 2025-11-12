@@ -445,10 +445,17 @@ if (type === 'water') {
     if (dialogueKey === 'axton') {
       // RIGHT CHOICE
       uiActionInProgress = true;
-      setTimeout(() => {
+
+      activeScene.playAnimationFor('axton', 'StandingUp', THREE.LoopOnce, () => {
         updateObjective(4); // Go to Level 4
         uiActionInProgress = false;
-      }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
+        console.log('Axton finished standing up, objective updated.');
+      });
+
+      // setTimeout(() => {
+      //   updateObjective(4); // Go to Level 4
+      //   uiActionInProgress = false;
+      // }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
     } else {
       runBadEnding(ENDINGS.LOLLIPOP_WRONG.title, ENDINGS.LOLLIPOP_WRONG.subtitle);
     }
