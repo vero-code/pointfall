@@ -155,11 +155,10 @@ function init() {
 
   // Pause menu
   controls.addEventListener("unlock", () => {
-    if (gameInProgress && !uiActionInProgress) {
+    if (gameInProgress && !choiceBox.classList.contains("active")) {
       pauseMenu.classList.remove("hidden");
       crosshair.classList.add("hidden");
     }
-    uiActionInProgress = false;
   });
 
   controls.addEventListener("lock", () => {
@@ -240,6 +239,11 @@ function clearScene() {
 
 function setupInput() {
   document.addEventListener("keydown", (e) => {
+    if (e.code === 'Escape' && gameInProgress && controls.isLocked) {
+      controls.unlock();
+      return;
+    }
+
     // Prevent movement if the choice box is open or the game is over
     if (choiceBox.classList.contains("active") || !gameInProgress) {
       moveForward = false;
@@ -263,7 +267,7 @@ function setupInput() {
         moveRight = true;
         break;
       case "KeyE":
-        if (currentInteractable) {
+        if (currentInteractable && !uiActionInProgress) {
           interact(currentInteractable);
         }
         break;
@@ -341,6 +345,7 @@ function hideChoiceBox() {
   choiceBox.classList.remove("active");
   crosshair.classList.remove("hidden");
   controls.lock();
+  uiActionInProgress = false;
 }
 
 function interact(object) {
@@ -557,8 +562,14 @@ function handleChoice(type, dialogueKey, choice) {
 
       uiActionInProgress = true;
       setTimeout(() => {
-        updateObjective(5); // Go to Level 5
-        uiActionInProgress = false;
+        try {
+          updateObjective(5);
+        } catch (e) {
+          console.error("Error updating to Level 5:", e);
+        } finally {
+          uiActionInProgress = false;
+          console.log("UI unlocked, Lvl 5 started.");
+        }
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
     } else {
       runBadEnding(ENDINGS.DOOR_WRONG.title, ENDINGS.DOOR_WRONG.subtitle);
