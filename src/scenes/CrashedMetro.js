@@ -233,7 +233,7 @@ export class CrashedMetro {
       },
       {
         name: "Walking",
-        path: "/models/animations/Martha-Suzie-Walking.glb",
+        path: "/models/animations/Martha-Suzie-Walking-Inplace.glb",
       },
       {
         name: "CrouchingIdle",

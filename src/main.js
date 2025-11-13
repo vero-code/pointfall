@@ -503,7 +503,7 @@ function handleChoice(type, dialogueKey, choice) {
           character.model.rotation.y = targetAngle;
         }
 
-        activeScene.playAnimationFor("martha", "Walking", THREE.LoopOnce);
+        activeScene.playAnimationFor("martha", "Walking", THREE.LoopRepeat);
 
         playerInventory.lollipop = 1; // Get lollipop
 
