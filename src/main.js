@@ -166,14 +166,29 @@ function init() {
     crosshair.classList.remove("hidden");
   });
 
-  // Uncomment -> Show start screen
-  startScreen.classList.remove("hidden");
+  const hasStartedBefore = sessionStorage.getItem('gameStarted');
 
-  // Uncomment -> Click on "Start" button
-  startButton.addEventListener("click", () => {
+  if (!hasStartedBefore) {
+    // Uncomment -> Show start screen
+    startScreen.classList.remove("hidden");
+
+    // Uncomment -> Click on "Start" button
+    startButton.addEventListener("click", () => {
+      startScreen.classList.add("hidden");
+      sessionStorage.setItem('gameStarted', 'true');
+      controls.lock();
+    });
+  } else {
     startScreen.classList.add("hidden");
-    controls.lock();
-  });
+
+    const lockOnClick = () => {
+      if (gameInProgress && !controls.isLocked) {
+        controls.lock();
+        renderer.domElement.removeEventListener('click', lockOnClick);
+      }
+    };
+    renderer.domElement.addEventListener('click', lockOnClick);
+  }
 
   // Comment out -> Click to lock (if out of focus)
   // renderer.domElement.addEventListener('click', () => {
