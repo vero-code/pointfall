@@ -35,6 +35,8 @@ let playerInventory = { ...STARTING_STATE.INVENTORY };
 let gameInProgress = true;
 let uiActionInProgress = false;
 let currentDialogueAudio = null;
+const footstepAudio = new Audio("/audio/sfx/footstep_player_loop.mp3");
+footstepAudio.loop = true;
 
 // UI Elements
 const dialogueBox = document.getElementById("dialogue-box");
@@ -156,6 +158,7 @@ function init() {
 
   // Pause menu
   controls.addEventListener("unlock", () => {
+    footstepAudio.pause();
     if (gameInProgress && !choiceBox.classList.contains("active")) {
       stopDialogueAudio();
       pauseMenu.classList.remove("hidden");
@@ -361,6 +364,7 @@ function showChoiceBox(
 
 function hideChoiceBox() {
   stopDialogueAudio();
+  footstepAudio.pause();
   choiceBox.classList.remove("active");
   crosshair.classList.remove("hidden");
   controls.lock();
@@ -487,6 +491,7 @@ function handleChoice(type, dialogueKey, choice) {
   // --- Lvl 1 Clue ---
   if (type === "david_quest") {
     if (choice === 1) {
+      playSFX("/audio/sfx/item_pickup.mp3", 0.7);
       playerInventory.water = 1;
       updateInventoryUI();
       updateObjective(2); // Go to Level 2
@@ -505,6 +510,7 @@ function handleChoice(type, dialogueKey, choice) {
       // RIGHT CHOICE
       uiActionInProgress = true;
 
+      playSFX("/audio/sfx/drink.mp3", 1);
       activeScene.playAnimationFor("martha", "Drinking", THREE.LoopOnce, () => {
         const lexaPosition = { x: 0.3, y: 0, z: -1.4 };
         const character = activeScene.survivorsMap.get("martha");
@@ -516,16 +522,22 @@ function handleChoice(type, dialogueKey, choice) {
           character.model.rotation.y = targetAngle;
         }
 
+        const marthaSteps = new Audio("/audio/sfx/footstep_npc.mp3");
+        marthaSteps.loop = true;
+        marthaSteps.volume = 1;
+        marthaSteps.play();
         activeScene.playAnimationFor("martha", "Walking", THREE.LoopRepeat);
 
         playerInventory.lollipop = 1; // Get lollipop
 
         activeScene.moveCharacterTo("martha", lexaPosition, 3000, () => {
+          marthaSteps.pause();
           activeScene.playAnimationFor(
             "martha",
             "CrouchingIdle",
             THREE.LoopRepeat
           );
+          playSFX("/audio/sfx/item_pickup.mp3", 0.7);
           updateInventoryUI();
           updateObjective(3); // Go to Level 3
           uiActionInProgress = false;
@@ -548,6 +560,8 @@ function handleChoice(type, dialogueKey, choice) {
       // RIGHT CHOICE
       uiActionInProgress = true;
 
+      playSFX("/audio/sfx/eat.mp3", 1);
+
       activeScene.playAnimationFor("axton", "StandingUp", THREE.LoopOnce);
       activeScene.playAnimationFor(
         "martha",
@@ -564,6 +578,7 @@ function handleChoice(type, dialogueKey, choice) {
       activeScene.playAnimationFor("lexa", "Pointing", THREE.LoopRepeat);
 
       setTimeout(() => {
+        playSFX("/audio/sfx/door_reveal.mp3", 1);
         activeScene.showDoor();
         updateObjective(4); // Go to Level 4
         uiActionInProgress = false;
@@ -587,6 +602,7 @@ function handleChoice(type, dialogueKey, choice) {
       const newColor = "rgba(50, 255, 50, 1.0)";
 
       activeScene.updateDoorSign(newText, newColor);
+      playSFX("/audio/sfx/door_unlock.mp3", 1);
 
       uiActionInProgress = true;
       setTimeout(() => {
@@ -630,6 +646,7 @@ function handleChoice(type, dialogueKey, choice) {
 }
 
 function runBadEnding(title, subtitle) {
+  playSFX("/audio/sfx/game_over_fail.mp3", 0.8);
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
@@ -645,6 +662,7 @@ function runBadEnding(title, subtitle) {
 }
 
 function runGoodEnding(title, subtitle) {
+  playSFX("/audio/sfx/game_over_win.mp3", 0.8);
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
@@ -728,6 +746,16 @@ function animate() {
     direction.x = Number(moveRight) - Number(moveLeft);
     direction.normalize();
 
+    const isMoving = moveForward || moveBackward || moveLeft || moveRight;
+
+    if (isMoving && footstepAudio.paused) {
+      footstepAudio
+        .play()
+        .catch((e) => console.warn("Footstep audio error:", e));
+    } else if (!isMoving && !footstepAudio.paused) {
+      footstepAudio.pause();
+    }
+
     if (moveForward || moveBackward)
       velocity.z -= direction.z * player.speed * delta;
     if (moveLeft || moveRight) velocity.x -= direction.x * player.speed * delta;
@@ -806,4 +834,15 @@ function playDialogueAudio(audioPath) {
       }
     });
   }
+}
+
+/**
+ * Plays a short sound effect (SFX).
+ * @param {string} audioPath - Path to the .mp3 file
+ * @param {number} [volume=1.0] - Volume from 0.0 to 1.0
+ */
+function playSFX(audioPath, volume = 1.0) {
+  const sfx = new Audio(audioPath);
+  sfx.volume = volume;
+  sfx.play().catch((e) => console.error("SFX play failed:", e));
 }
