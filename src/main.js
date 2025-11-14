@@ -35,8 +35,12 @@ let playerInventory = { ...STARTING_STATE.INVENTORY };
 let gameInProgress = true;
 let uiActionInProgress = false;
 let currentDialogueAudio = null;
+
 const footstepAudio = new Audio("/audio/sfx/footstep_player_loop.mp3");
 footstepAudio.loop = true;
+const music = new Audio("/audio/music/background_music.mp3");
+music.loop = true;
+music.volume = 0.2;
 
 // UI Elements
 const dialogueBox = document.getElementById("dialogue-box");
@@ -174,13 +178,14 @@ function init() {
   const hasStartedBefore = sessionStorage.getItem("gameStarted");
 
   if (!hasStartedBefore) {
-    // Uncomment -> Show start screen
+    // Show start screen
     startScreen.classList.remove("hidden");
 
-    // Uncomment -> Click on "Start" button
+    // Click on "Start" button
     startButton.addEventListener("click", () => {
       startScreen.classList.add("hidden");
       sessionStorage.setItem("gameStarted", "true");
+      music.play();
       controls.lock();
     });
   } else {
