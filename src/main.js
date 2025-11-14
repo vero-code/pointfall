@@ -34,6 +34,7 @@ const totalLevels = GAME_SETTINGS.TOTAL_LEVELS;
 let playerInventory = { ...STARTING_STATE.INVENTORY };
 let gameInProgress = true;
 let uiActionInProgress = false;
+let currentDialogueAudio = null;
 
 // UI Elements
 const dialogueBox = document.getElementById("dialogue-box");
@@ -156,6 +157,7 @@ function init() {
   // Pause menu
   controls.addEventListener("unlock", () => {
     if (gameInProgress && !choiceBox.classList.contains("active")) {
+      stopDialogueAudio();
       pauseMenu.classList.remove("hidden");
       crosshair.classList.add("hidden");
     }
@@ -166,7 +168,7 @@ function init() {
     crosshair.classList.remove("hidden");
   });
 
-  const hasStartedBefore = sessionStorage.getItem('gameStarted');
+  const hasStartedBefore = sessionStorage.getItem("gameStarted");
 
   if (!hasStartedBefore) {
     // Uncomment -> Show start screen
@@ -175,7 +177,7 @@ function init() {
     // Uncomment -> Click on "Start" button
     startButton.addEventListener("click", () => {
       startScreen.classList.add("hidden");
-      sessionStorage.setItem('gameStarted', 'true');
+      sessionStorage.setItem("gameStarted", "true");
       controls.lock();
     });
   } else {
@@ -184,10 +186,10 @@ function init() {
     const lockOnClick = () => {
       if (gameInProgress && !controls.isLocked) {
         controls.lock();
-        renderer.domElement.removeEventListener('click', lockOnClick);
+        renderer.domElement.removeEventListener("click", lockOnClick);
       }
     };
-    renderer.domElement.addEventListener('click', lockOnClick);
+    renderer.domElement.addEventListener("click", lockOnClick);
   }
 
   // Comment out -> Click to lock (if out of focus)
@@ -254,7 +256,7 @@ function clearScene() {
 
 function setupInput() {
   document.addEventListener("keydown", (e) => {
-    if (e.code === 'Escape' && gameInProgress && controls.isLocked) {
+    if (e.code === "Escape" && gameInProgress && controls.isLocked) {
       controls.unlock();
       return;
     }
@@ -308,6 +310,7 @@ function setupInput() {
 
   // Close dialogue
   dialogueBox.addEventListener("click", () => {
+    stopDialogueAudio();
     dialogueBox.classList.remove("active");
   });
 
@@ -336,7 +339,6 @@ function showChoiceBox(
   btn2Callback = null
 ) {
   uiActionInProgress = true;
-  controls.unlock();
   crosshair.classList.add("hidden");
 
   choiceSpeaker.textContent = speaker;
@@ -354,9 +356,11 @@ function showChoiceBox(
   }
 
   choiceBox.classList.add("active");
+  controls.unlock();
 }
 
 function hideChoiceBox() {
+  stopDialogueAudio();
   choiceBox.classList.remove("active");
   crosshair.classList.remove("hidden");
   controls.lock();
@@ -378,6 +382,7 @@ function interact(object) {
 
   // Lvl 1 Clue
   if (currentLevel === 1 && dialogueKey === "david" && dialogue.text_lvl1) {
+    playDialogueAudio(dialogue.text_lvl1_audio);
     showChoiceBox(
       dialogue.name,
       dialogue.text_lvl1,
@@ -393,6 +398,7 @@ function interact(object) {
     playerInventory.water > 0 &&
     dialogue.water_prompt
   ) {
+    playDialogueAudio(dialogue.water_prompt_audio);
     showChoiceBox(
       dialogue.name,
       dialogue.water_prompt,
@@ -410,6 +416,7 @@ function interact(object) {
     playerInventory.lollipop > 0 &&
     dialogue.lollipop_prompt
   ) {
+    playDialogueAudio(dialogue.lollipop_prompt_audio);
     showChoiceBox(
       dialogue.name,
       dialogue.lollipop_prompt,
@@ -423,6 +430,7 @@ function interact(object) {
 
   // Lvl 4 Door
   if (currentLevel === 4 && dialogue.door_prompt) {
+    playDialogueAudio(dialogue.door_prompt_audio);
     showChoiceBox(
       dialogue.name,
       dialogue.door_prompt,
@@ -436,6 +444,7 @@ function interact(object) {
 
   // Lvl 5 Carry
   if (currentLevel === 5 && dialogue.carry_prompt) {
+    playDialogueAudio(dialogue.carry_prompt_audio);
     showChoiceBox(
       dialogue.name,
       dialogue.carry_prompt,
@@ -449,6 +458,7 @@ function interact(object) {
 
   // 6. DEFAULT DIALOGUE (if no choices apply)
   if (currentLevel === 1 && dialogue.text_lvl1 && dialogueKey !== "david") {
+    playDialogueAudio(dialogue.text_lvl1_audio);
     showChoiceBox(
       dialogue.name,
       dialogue.text_lvl1,
@@ -461,6 +471,9 @@ function interact(object) {
   // 7. DEFAULT DIALOGUE
   dialogueSpeaker.textContent = dialogue.name;
   dialogueText.textContent = dialogue.text || "(The character is silent)";
+  if (dialogue.text) {
+    playDialogueAudio(dialogue.text_audio);
+  }
   dialogueBox.classList.add("active");
 }
 
@@ -583,7 +596,6 @@ function handleChoice(type, dialogueKey, choice) {
           console.error("Error updating to Level 5:", e);
         } finally {
           uiActionInProgress = false;
-          console.log("UI unlocked, Lvl 5 started.");
         }
       }, GAME_SETTINGS.OBJECTIVE_UPDATE_DELAY);
     } else {
@@ -618,7 +630,6 @@ function handleChoice(type, dialogueKey, choice) {
 }
 
 function runBadEnding(title, subtitle) {
-  console.log("Bad Ending!");
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
@@ -634,7 +645,6 @@ function runBadEnding(title, subtitle) {
 }
 
 function runGoodEnding(title, subtitle) {
-  console.log("Good Ending!");
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
@@ -771,4 +781,29 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function stopDialogueAudio() {
+  if (currentDialogueAudio) {
+    currentDialogueAudio.pause();
+    currentDialogueAudio.currentTime = 0;
+    currentDialogueAudio = null;
+  }
+}
+
+function playDialogueAudio(audioPath) {
+  stopDialogueAudio();
+  if (!audioPath) return;
+
+  currentDialogueAudio = new Audio(audioPath);
+  const playPromise = currentDialogueAudio.play();
+
+  if (playPromise !== undefined) {
+    playPromise.catch((error) => {
+      if (error.name === "AbortError") {
+      } else {
+        console.error("Audio play failed:", error);
+      }
+    });
+  }
 }
