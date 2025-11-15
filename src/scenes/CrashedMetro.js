@@ -3,6 +3,7 @@ import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 import { CharacterBuilder } from "../utils/CharacterBuilder.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { survivorsData } from "../data/crashedSurvivorsData.js";
 
 export class CrashedMetro {
@@ -10,13 +11,18 @@ export class CrashedMetro {
     this.scene = scene;
     this.textureLoader = textureLoader;
     this.survivors = [];
-    this.gltfLoader = new GLTFLoader();
     this.mixers = [];
     this.survivorsMap = new Map();
     this.animationClips = new Map();
     this.tweenGroup = new TWEEN.Group();
     this.exitDoor = null;
     this.doorSign = null;
+
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("/draco/");
+
+    this.gltfLoader = new GLTFLoader();
+    this.gltfLoader.setDRACOLoader(dracoLoader);
   }
 
   update(delta) {
