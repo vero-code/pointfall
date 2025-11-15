@@ -700,6 +700,9 @@ function animate() {
     activeScene.update(delta);
   }
 
+  const isMoving = moveForward || moveBackward || moveLeft || moveRight;
+  audioManager.manageFootstepAudio(isMoving);
+
   if (controls.isLocked) {
     // Display coordinates
     // console.log(camera.position);
@@ -710,9 +713,6 @@ function animate() {
     direction.z = Number(moveForward) - Number(moveBackward);
     direction.x = Number(moveRight) - Number(moveLeft);
     direction.normalize();
-
-    const isMoving = moveForward || moveBackward || moveLeft || moveRight;
-    audioManager.manageFootstepAudio(isMoving);
 
     if (moveForward || moveBackward)
       velocity.z -= direction.z * player.speed * delta;
