@@ -11,7 +11,7 @@ export const survivorsData = [
     name: 'martha',
     pos: [-1, 0, -1.5],
     type: 'model',
-    modelPath: '/models/Martha-Suzie-Sitting-Disbelief.glb',
+    modelPath: '/models/Martha-Suzie-Injured-Idle.glb',
     // color: 0x4a8a0a,
   },
   { 

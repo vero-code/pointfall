@@ -76,10 +76,7 @@ export class CrashedMetro {
 
     // Create a sign
     const signPosition = new THREE.Vector3(0, 2.85, -5.85);
-    this.doorSign = this.createTextSprite(
-      "Locked (electric).",
-      signPosition
-    );
+    this.doorSign = this.createTextSprite("Locked (electric).", signPosition);
 
     this.doorSign.visible = false;
     this.scene.add(this.doorSign);
@@ -100,15 +97,19 @@ export class CrashedMetro {
    * Updates existing door sign.
    */
   updateDoorSign(newText, color) {
-    if (!this.doorSign || !this.doorSign.material || !this.doorSign.material.map) {
+    if (
+      !this.doorSign ||
+      !this.doorSign.material ||
+      !this.doorSign.material.map
+    ) {
       console.error("Door sign sprite or its material/map is missing.");
       return;
     }
 
     const canvas = this.doorSign.material.map.image;
     const context = canvas.getContext("2d");
-    
-    const width = canvas.width;   // 512
+
+    const width = canvas.width; // 512
     const height = canvas.height; // 128
     const fontSize = 40; // Must match with createTextSprite
 
@@ -275,7 +276,7 @@ export class CrashedMetro {
           glb.animations = gltf.animations;
 
           glb.position.set(...data.pos);
-          const scale = data.scale ?? 1.0;
+          const scale = data.scale ?? 1;
           glb.scale.set(scale, scale, scale);
           glb.traverse((n) => {
             if (n.isMesh) {

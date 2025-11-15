@@ -11,65 +11,36 @@ import {
   SCENE_SETTINGS,
   WORLD_BOUNDS,
 } from "./config.js";
+import { audioManager } from "./utils/audioManager.js";
+import { uiManager } from "./utils/uiManager.js";
 import "./style.css";
 
-// Game state
+// Game variables
 let scene, camera, renderer, controls;
 const clock = new THREE.Clock();
+const textureLoader = new THREE.TextureLoader();
+
+// Scene and player
 let activeScene;
 let currentScene = "crashed";
 let player = { height: PLAYER_SETTINGS.HEIGHT, speed: PLAYER_SETTINGS.SPEED };
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
 let moveForward = false,
   moveBackward = false,
   moveLeft = false,
   moveRight = false;
-let velocity = new THREE.Vector3();
-let direction = new THREE.Vector3();
-let currentInteractable = null;
-let raycaster = new THREE.Raycaster();
-const textureLoader = new THREE.TextureLoader();
 
+// Game logic
 let currentLevel = STARTING_STATE.LEVEL;
 const totalLevels = GAME_SETTINGS.TOTAL_LEVELS;
 let playerInventory = { ...STARTING_STATE.INVENTORY };
 let gameInProgress = true;
 let uiActionInProgress = false;
-let currentDialogueAudio = null;
 
-const footstepAudio = new Audio("/audio/sfx/footstep_player_loop.mp3");
-footstepAudio.loop = true;
-const music = new Audio("/audio/music/background_music.mp3");
-music.loop = true;
-music.volume = 0.2;
-
-// UI Elements
-const dialogueBox = document.getElementById("dialogue-box");
-const dialogueSpeaker = document.getElementById("dialogue-speaker");
-const dialogueText = document.getElementById("dialogue-text");
-const interactionPrompt = document.getElementById("interaction-prompt");
-const pauseMenu = document.getElementById("pause-menu");
-const resumeButton = document.getElementById("resume-button");
-const restartButton = document.getElementById("restart-button");
-const crosshair = document.getElementById("crosshair");
-const inventoryItemsEl = document.getElementById("inventory-items");
-
-const choiceBox = document.getElementById("choice-box");
-const choiceSpeaker = document.getElementById("choice-speaker");
-const choicePrompt = document.getElementById("choice-prompt");
-const choiceBtn1 = document.getElementById("choice-btn-1");
-const choiceBtn2 = document.getElementById("choice-btn-2");
-
-const endScreen = document.getElementById("end-screen");
-const endTitle = document.getElementById("end-title");
-const endSubtitle = document.getElementById("end-subtitle");
-const restartButtonEnd = document.getElementById("restart-button-end");
-
-const levelEl = document.getElementById("level");
-const objectiveTextEl = document.getElementById("objective-text");
-const startScreen = document.getElementById("start-screen");
-const startButton = startScreen.querySelector(".start-button");
-
-// Bounding Box
+// Interactions
+let currentInteractable = null;
+let raycaster = new THREE.Raycaster();
 const survivorBBox = new THREE.Box3();
 const intersectionPoint = new THREE.Vector3();
 
@@ -77,53 +48,55 @@ const intersectionPoint = new THREE.Vector3();
 init();
 animate();
 
+//------------------------------------------------------------
+
 // Update Level and Objective
-function updateObjective(level, text = null) {
-  if (level > totalLevels) level = totalLevels;
-  currentLevel = level;
+// function updateObjective(level, text = null) {
+//   if (level > totalLevels) level = totalLevels;
+//   currentLevel = level;
 
-  const newText = text || OBJECTIVES[level] || `Objective ${level}???`;
+//   const newText = text || OBJECTIVES[level] || `Objective ${level}???`;
 
-  if (levelEl) {
-    levelEl.textContent = `${currentLevel} / ${totalLevels}`;
-  }
-  if (objectiveTextEl) {
-    objectiveTextEl.innerHTML = newText;
-  }
-}
+//   if (levelEl) {
+//     levelEl.textContent = `${currentLevel} / ${totalLevels}`;
+//   }
+//   if (objectiveTextEl) {
+//     objectiveTextEl.innerHTML = newText;
+//   }
+// }
 
-function updateInventoryUI() {
-  if (!inventoryItemsEl) return;
-  inventoryItemsEl.innerHTML = "";
-  let itemsFound = false;
+// function updateInventoryUI() {
+//   if (!inventoryItemsEl) return;
+//   inventoryItemsEl.innerHTML = "";
+//   let itemsFound = false;
 
-  if (playerInventory.water > 0) {
-    inventoryItemsEl.innerHTML += `
-      <div class="item">
-        <span class="item-icon">💧</span>
-        <span class="item-name">Water Bottle (1)</span>
-      </div>
-    `;
-    itemsFound = true;
-  }
-  if (playerInventory.lollipop > 0) {
-    inventoryItemsEl.innerHTML += `
-      <div class="item">
-        <span class="item-icon">🍭</span>
-        <span class="item-name">Lollipop (1)</span>
-      </div>
-    `;
-    itemsFound = true;
-  }
+//   if (playerInventory.water > 0) {
+//     inventoryItemsEl.innerHTML += `
+//       <div class="item">
+//         <span class="item-icon">💧</span>
+//         <span class="item-name">Water Bottle (1)</span>
+//       </div>
+//     `;
+//     itemsFound = true;
+//   }
+//   if (playerInventory.lollipop > 0) {
+//     inventoryItemsEl.innerHTML += `
+//       <div class="item">
+//         <span class="item-icon">🍭</span>
+//         <span class="item-name">Lollipop (1)</span>
+//       </div>
+//     `;
+//     itemsFound = true;
+//   }
 
-  if (!itemsFound) {
-    inventoryItemsEl.innerHTML += `
-      <div class="item">
-        <span class="item-name">(empty)</span>
-      </div>
-    `;
-  }
-}
+//   if (!itemsFound) {
+//     inventoryItemsEl.innerHTML += `
+//       <div class="item">
+//         <span class="item-name">(empty)</span>
+//       </div>
+//     `;
+//   }
+// }
 
 function init() {
   // Scene
@@ -160,37 +133,59 @@ function init() {
   // Controls
   controls = new PointerLockControls(camera, document.body);
 
-  // Pause menu
+  // UI manager init
+  const uiElements = {
+    dialogueBox: document.getElementById("dialogue-box"),
+    dialogueSpeaker: document.getElementById("dialogue-speaker"),
+    dialogueText: document.getElementById("dialogue-text"),
+    interactionPrompt: document.getElementById("interaction-prompt"),
+    pauseMenu: document.getElementById("pause-menu"),
+    crosshair: document.getElementById("crosshair"),
+    inventoryItemsEl: document.getElementById("inventory-items"),
+    choiceBox: document.getElementById("choice-box"),
+    choiceSpeaker: document.getElementById("choice-speaker"),
+    choicePrompt: document.getElementById("choice-prompt"),
+    choiceBtn1: document.getElementById("choice-btn-1"),
+    choiceBtn2: document.getElementById("choice-btn-2"),
+    endScreen: document.getElementById("end-screen"),
+    endTitle: document.getElementById("end-title"),
+    endSubtitle: document.getElementById("end-subtitle"),
+    levelEl: document.getElementById("level"),
+    objectiveTextEl: document.getElementById("objective-text"),
+  };
+  uiManager.init(uiElements);
+
+  // --- Event listeners ---
   controls.addEventListener("unlock", () => {
-    footstepAudio.pause();
+    const choiceBox = document.getElementById("choice-box");
     if (gameInProgress && !choiceBox.classList.contains("active")) {
-      stopDialogueAudio();
-      pauseMenu.classList.remove("hidden");
-      crosshair.classList.add("hidden");
+      audioManager.pauseGameAudio();
+      uiManager.showPauseMenu();
     }
   });
 
   controls.addEventListener("lock", () => {
-    pauseMenu.classList.add("hidden");
-    crosshair.classList.remove("hidden");
+    uiManager.hidePauseMenu();
+    if (gameInProgress) {
+      audioManager.playMusic();
+    }
   });
 
+  // --- Launch the game ---
+  const startScreen = document.getElementById("start-screen");
+  const startButton = startScreen.querySelector(".start-button");
   const hasStartedBefore = sessionStorage.getItem("gameStarted");
 
   if (!hasStartedBefore) {
-    // Show start screen
     startScreen.classList.remove("hidden");
-
-    // Click on "Start" button
     startButton.addEventListener("click", () => {
       startScreen.classList.add("hidden");
       sessionStorage.setItem("gameStarted", "true");
-      music.play();
+      audioManager.playMusic();
       controls.lock();
     });
   } else {
     startScreen.classList.add("hidden");
-
     const lockOnClick = () => {
       if (gameInProgress && !controls.isLocked) {
         controls.lock();
@@ -200,26 +195,16 @@ function init() {
     renderer.domElement.addEventListener("click", lockOnClick);
   }
 
-  // Comment out -> Click to lock (if out of focus)
-  // renderer.domElement.addEventListener('click', () => {
-  //   if (gameInProgress && !controls.isLocked && startScreen.classList.contains('hidden')) {
-  //     controls.lock();
-  //   }
-  // });
-
-  // Load initial scene
   loadCrashedScene();
-
-  // Input
   setupInput();
-
-  // Window resize
   window.addEventListener("resize", onWindowResize);
 
-  updateInventoryUI();
-  updateObjective(STARTING_STATE.LEVEL);
-
-  // setupDebugControls();
+  uiManager.updateInventoryUI(playerInventory);
+  uiManager.updateObjective(
+    STARTING_STATE.LEVEL,
+    OBJECTIVES[STARTING_STATE.LEVEL],
+    totalLevels
+  );
 }
 
 function loadCrashedScene() {
@@ -264,6 +249,7 @@ function clearScene() {
 
 function setupInput() {
   document.addEventListener("keydown", (e) => {
+    const choiceBox = document.getElementById("choice-box");
     if (e.code === "Escape" && gameInProgress && controls.isLocked) {
       controls.unlock();
       return;
@@ -317,68 +303,35 @@ function setupInput() {
   });
 
   // Close dialogue
+  const dialogueBox = document.getElementById("dialogue-box");
   dialogueBox.addEventListener("click", () => {
-    stopDialogueAudio();
-    dialogueBox.classList.remove("active");
+    audioManager.stopDialogueAudio();
+    uiManager.hideDialogue();
   });
 
   // Resume button
+  const resumeButton = document.getElementById("resume-button");
   resumeButton.addEventListener("click", () => {
     controls.lock();
   });
 
   // Restart button (from pause)
+  const restartButton = document.getElementById("restart-button");
   restartButton.addEventListener("click", () => {
     location.reload();
   });
 
   // Restart button (from end screen)
+  const restartButtonEnd = document.getElementById("restart-button-end");
   restartButtonEnd.addEventListener("click", () => {
     location.reload();
   });
 }
 
-function showChoiceBox(
-  speaker,
-  prompt,
-  btn1Text,
-  btn1Callback,
-  btn2Text = null,
-  btn2Callback = null
-) {
-  uiActionInProgress = true;
-  crosshair.classList.add("hidden");
-
-  choiceSpeaker.textContent = speaker;
-  choicePrompt.textContent = prompt;
-
-  choiceBtn1.textContent = btn1Text;
-  choiceBtn1.onclick = btn1Callback;
-
-  if (btn2Text) {
-    choiceBtn2.textContent = btn2Text;
-    choiceBtn2.onclick = btn2Callback;
-    choiceBtn2.classList.remove("hidden");
-  } else {
-    choiceBtn2.classList.add("hidden");
-  }
-
-  choiceBox.classList.add("active");
-  controls.unlock();
-}
-
-function hideChoiceBox() {
-  stopDialogueAudio();
-  footstepAudio.pause();
-  choiceBox.classList.remove("active");
-  crosshair.classList.remove("hidden");
-  controls.lock();
-  uiActionInProgress = false;
-}
-
+// --- Basic game logic ---
 function interact(object) {
   if (!gameInProgress || uiActionInProgress) return;
-  dialogueBox.classList.remove("active");
+  uiManager.hideDialogue();
 
   const dialogueKey = object.userData.dialogue;
   if (!dialogueKey) return;
@@ -389,15 +342,24 @@ function interact(object) {
   const dialogue = dialogueSet[dialogueKey];
   if (!dialogue) return;
 
+  const onChoice = (type, key, choice) => {
+    uiManager.hideChoiceBox(controls);
+    audioManager.pauseInterfaceAudio();
+    uiActionInProgress = false;
+    handleChoice(type, key, choice);
+  };
+
   // Lvl 1 Clue
   if (currentLevel === 1 && dialogueKey === "david" && dialogue.text_lvl1) {
-    playDialogueAudio(dialogue.text_lvl1_audio);
-    showChoiceBox(
+    audioManager.playDialogueAudio(dialogue.text_lvl1_audio);
+    uiActionInProgress = true;
+    uiManager.showChoiceBox(
       dialogue.name,
       dialogue.text_lvl1,
       dialogue.choice1_lvl1,
-      () => handleChoice("david_quest", dialogueKey, 1)
+      () => onChoice("david_quest", dialogueKey, 1)
     );
+    controls.unlock();
     return;
   }
 
@@ -407,15 +369,17 @@ function interact(object) {
     playerInventory.water > 0 &&
     dialogue.water_prompt
   ) {
-    playDialogueAudio(dialogue.water_prompt_audio);
-    showChoiceBox(
+    audioManager.playDialogueAudio(dialogue.water_prompt_audio);
+    uiActionInProgress = true;
+    uiManager.showChoiceBox(
       dialogue.name,
       dialogue.water_prompt,
       dialogue.water_choice1,
-      () => handleChoice("water", dialogueKey, 1),
+      () => onChoice("water", dialogueKey, 1),
       dialogue.water_choice2,
-      () => handleChoice("water", dialogueKey, 2)
+      () => onChoice("water", dialogueKey, 2)
     );
+    controls.unlock();
     return;
   }
 
@@ -425,69 +389,74 @@ function interact(object) {
     playerInventory.lollipop > 0 &&
     dialogue.lollipop_prompt
   ) {
-    playDialogueAudio(dialogue.lollipop_prompt_audio);
-    showChoiceBox(
+    audioManager.playDialogueAudio(dialogue.lollipop_prompt_audio);
+    uiActionInProgress = true;
+    uiManager.showChoiceBox(
       dialogue.name,
       dialogue.lollipop_prompt,
       dialogue.lollipop_choice1,
-      () => handleChoice("lollipop", dialogueKey, 1),
+      () => onChoice("lollipop", dialogueKey, 1),
       dialogue.lollipop_choice2,
-      () => handleChoice("lollipop", dialogueKey, 2)
+      () => onChoice("lollipop", dialogueKey, 2)
     );
+    controls.unlock();
     return;
   }
 
   // Lvl 4 Door
   if (currentLevel === 4 && dialogue.door_prompt) {
-    playDialogueAudio(dialogue.door_prompt_audio);
-    showChoiceBox(
+    audioManager.playDialogueAudio(dialogue.door_prompt_audio);
+    uiActionInProgress = true;
+    uiManager.showChoiceBox(
       dialogue.name,
       dialogue.door_prompt,
       dialogue.door_choice1,
-      () => handleChoice("door", dialogueKey, 1),
+      () => onChoice("door", dialogueKey, 1),
       dialogue.door_choice2,
-      () => handleChoice("door", dialogueKey, 2)
+      () => onChoice("door", dialogueKey, 2)
     );
+    controls.unlock();
     return;
   }
 
   // Lvl 5 Carry
   if (currentLevel === 5 && dialogue.carry_prompt) {
-    playDialogueAudio(dialogue.carry_prompt_audio);
-    showChoiceBox(
+    audioManager.playDialogueAudio(dialogue.carry_prompt_audio);
+    uiActionInProgress = true;
+    uiManager.showChoiceBox(
       dialogue.name,
       dialogue.carry_prompt,
       dialogue.carry_choice1,
-      () => handleChoice("carry", dialogueKey, 1),
+      () => onChoice("carry", dialogueKey, 1),
       dialogue.carry_choice2,
-      () => handleChoice("carry", dialogueKey, 2)
+      () => onChoice("carry", dialogueKey, 2)
     );
+    controls.unlock();
     return;
   }
 
-  // 6. DEFAULT DIALOGUE (if no choices apply)
+  // 6. DEFAULT DIALOGUE (Lvl 1)
   if (currentLevel === 1 && dialogue.text_lvl1 && dialogueKey !== "david") {
-    playDialogueAudio(dialogue.text_lvl1_audio);
-    showChoiceBox(
+    audioManager.playDialogueAudio(dialogue.text_lvl1_audio);
+    uiManager.showChoiceBox(
       dialogue.name,
       dialogue.text_lvl1,
       dialogue.clue_choice1,
-      () => handleChoice("clue_ack", dialogueKey, 1)
+      () => onChoice("clue_ack", dialogueKey, 1)
     );
+    controls.unlock();
     return;
   }
 
   // 7. DEFAULT DIALOGUE
-  dialogueSpeaker.textContent = dialogue.name;
-  dialogueText.textContent = dialogue.text || "(The character is silent)";
+  uiManager.showDialogue(dialogue.name, dialogue.text);
   if (dialogue.text) {
-    playDialogueAudio(dialogue.text_audio);
+    audioManager.playDialogueAudio(dialogue.text_audio);
   }
-  dialogueBox.classList.add("active");
 }
 
 function handleChoice(type, dialogueKey, choice) {
-  hideChoiceBox();
+  // hideChoiceBox();
 
   if (type === "clue_ack") {
     return;
@@ -496,10 +465,11 @@ function handleChoice(type, dialogueKey, choice) {
   // --- Lvl 1 Clue ---
   if (type === "david_quest") {
     if (choice === 1) {
-      playSFX("/audio/sfx/item_pickup.mp3", 0.7);
+      audioManager.playSFX("/audio/sfx/item_pickup.mp3", 0.7);
       playerInventory.water = 1;
-      updateInventoryUI();
-      updateObjective(2); // Go to Level 2
+      uiManager.updateInventoryUI(playerInventory);
+      uiManager.updateObjective(2, OBJECTIVES[2], totalLevels);
+      currentLevel = 2;
     }
     return;
   }
@@ -509,13 +479,13 @@ function handleChoice(type, dialogueKey, choice) {
     if (choice === 2) return; // Player saved the water
 
     playerInventory.water = 0;
-    updateInventoryUI();
+    uiManager.updateInventoryUI(playerInventory);
 
     if (dialogueKey === "martha") {
       // RIGHT CHOICE
       uiActionInProgress = true;
 
-      playSFX("/audio/sfx/drink.mp3", 1);
+      audioManager.playSFX("/audio/sfx/drink.mp3", 1);
       activeScene.playAnimationFor("martha", "Drinking", THREE.LoopOnce, () => {
         const lexaPosition = { x: 0.3, y: 0, z: -1.4 };
         const character = activeScene.survivorsMap.get("martha");
@@ -542,9 +512,10 @@ function handleChoice(type, dialogueKey, choice) {
             "CrouchingIdle",
             THREE.LoopRepeat
           );
-          playSFX("/audio/sfx/item_pickup.mp3", 0.7);
-          updateInventoryUI();
-          updateObjective(3); // Go to Level 3
+          audioManager.playSFX("/audio/sfx/item_pickup.mp3", 0.7);
+          uiManager.updateInventoryUI(playerInventory);
+          uiManager.updateObjective(3, OBJECTIVES[3], totalLevels);
+          currentLevel = 3;
           uiActionInProgress = false;
         });
       });
@@ -559,13 +530,12 @@ function handleChoice(type, dialogueKey, choice) {
     if (choice === 2) return; // Saved the lollipop
 
     playerInventory.lollipop = 0;
-    updateInventoryUI();
+    uiManager.updateInventoryUI(playerInventory);
 
     if (dialogueKey === "axton") {
       // RIGHT CHOICE
       uiActionInProgress = true;
-
-      playSFX("/audio/sfx/eat.mp3", 1);
+      audioManager.playSFX("/audio/sfx/eat.mp3", 1);
 
       activeScene.playAnimationFor("axton", "StandingUp", THREE.LoopOnce);
       activeScene.playAnimationFor(
@@ -583,9 +553,10 @@ function handleChoice(type, dialogueKey, choice) {
       activeScene.playAnimationFor("lexa", "Pointing", THREE.LoopRepeat);
 
       setTimeout(() => {
-        playSFX("/audio/sfx/door_reveal.mp3", 1);
+        audioManager.playSFX("/audio/sfx/door_reveal.mp3", 1);
         activeScene.showDoor();
-        updateObjective(4); // Go to Level 4
+        uiManager.updateObjective(4, OBJECTIVES[4], totalLevels);
+        currentLevel = 4;
         uiActionInProgress = false;
       }, 3000);
     } else {
@@ -607,12 +578,13 @@ function handleChoice(type, dialogueKey, choice) {
       const newColor = "rgba(50, 255, 50, 1.0)";
 
       activeScene.updateDoorSign(newText, newColor);
-      playSFX("/audio/sfx/door_unlock.mp3", 1);
+      audioManager.playSFX("/audio/sfx/door_unlock.mp3", 1);
 
       uiActionInProgress = true;
       setTimeout(() => {
         try {
-          updateObjective(5);
+          uiManager.updateObjective(5, OBJECTIVES[5], totalLevels);
+          currentLevel = 5;
         } catch (e) {
           console.error("Error updating to Level 5:", e);
         } finally {
@@ -627,15 +599,12 @@ function handleChoice(type, dialogueKey, choice) {
 
   // --- Lvl 5 Carry ---
   if (type === "carry") {
-    if (dialogueKey === "maya") {
-      if (choice === 1) {
-        runBadEnding(ENDINGS.CARRY_WRONG.title, ENDINGS.CARRY_WRONG.subtitle);
-      }
+    if (dialogueKey === "maya" && choice === 1) {
+      runBadEnding(ENDINGS.CARRY_WRONG.title, ENDINGS.CARRY_WRONG.subtitle);
       return;
     }
 
-    // Other characters
-    if (choice === 2) return;
+    if (choice === 2) return; // Nevermind
 
     if (dialogueKey === "david") {
       // FINALE
@@ -651,39 +620,30 @@ function handleChoice(type, dialogueKey, choice) {
 }
 
 function runBadEnding(title, subtitle) {
-  playSFX("/audio/sfx/game_over_fail.mp3", 0.8);
+  audioManager.playSFX("/audio/sfx/game_over_fail.mp3", 0.8);
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
   moveLeft = false;
   moveRight = false;
-
-  endTitle.textContent = title;
-  endSubtitle.textContent = subtitle;
-
-  endScreen.classList.remove("hidden");
-  crosshair.classList.add("hidden");
+  uiManager.showEnding(title, subtitle);
   controls.unlock();
 }
 
 function runGoodEnding(title, subtitle) {
-  playSFX("/audio/sfx/game_over_win.mp3", 0.8);
+  audioManager.playSFX("/audio/sfx/game_over_win.mp3", 0.8);
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
   moveLeft = false;
   moveRight = false;
-
-  endTitle.textContent = title;
-  endSubtitle.textContent = subtitle;
-
-  endScreen.classList.remove("hidden");
-  crosshair.classList.add("hidden");
+  uiManager.showEnding(title, subtitle);
   controls.unlock();
 }
 
 function checkInteractions() {
-  // Don't show the [E] prompt if a choice is open or the game is over
+  const choiceBox = document.getElementById("choice-box");
+  const interactionPrompt = document.getElementById("interaction-prompt");
   if (
     choiceBox.classList.contains("active") ||
     !gameInProgress ||
@@ -752,14 +712,7 @@ function animate() {
     direction.normalize();
 
     const isMoving = moveForward || moveBackward || moveLeft || moveRight;
-
-    if (isMoving && footstepAudio.paused) {
-      footstepAudio
-        .play()
-        .catch((e) => console.warn("Footstep audio error:", e));
-    } else if (!isMoving && !footstepAudio.paused) {
-      footstepAudio.pause();
-    }
+    audioManager.manageFootstepAudio(isMoving);
 
     if (moveForward || moveBackward)
       velocity.z -= direction.z * player.speed * delta;
@@ -785,69 +738,9 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-function transitionToCrashed() {
-  const overlay = document.createElement("div");
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: black;
-    z-index: 10000;
-    opacity: 0;
-    transition: opacity 2s;
-    pointer-events: none;
-  `;
-  document.body.appendChild(overlay);
-
-  setTimeout(() => (overlay.style.opacity = "1"), 50);
-
-  setTimeout(() => {
-    loadCrashedScene();
-    overlay.style.opacity = "0";
-    setTimeout(() => overlay.remove(), 2000);
-  }, 2000);
-}
-
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function stopDialogueAudio() {
-  if (currentDialogueAudio) {
-    currentDialogueAudio.pause();
-    currentDialogueAudio.currentTime = 0;
-    currentDialogueAudio = null;
-  }
-}
-
-function playDialogueAudio(audioPath) {
-  stopDialogueAudio();
-  if (!audioPath) return;
-
-  currentDialogueAudio = new Audio(audioPath);
-  const playPromise = currentDialogueAudio.play();
-
-  if (playPromise !== undefined) {
-    playPromise.catch((error) => {
-      if (error.name === "AbortError") {
-      } else {
-        console.error("Audio play failed:", error);
-      }
-    });
-  }
-}
-
-/**
- * Plays a short sound effect (SFX).
- * @param {string} audioPath - Path to the .mp3 file
- * @param {number} [volume=1.0] - Volume from 0.0 to 1.0
- */
-function playSFX(audioPath, volume = 1.0) {
-  const sfx = new Audio(audioPath);
-  sfx.volume = volume;
-  sfx.play().catch((e) => console.error("SFX play failed:", e));
-}
