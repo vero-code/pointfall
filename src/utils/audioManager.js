@@ -1,10 +1,10 @@
 // src/utils/audioManager.js
 
 let currentDialogueAudio = null;
-const footstepAudio = new Audio("/audio/sfx/footstep_player_loop.mp3");
+const footstepAudio = new Audio("audio/sfx/footstep_player_loop.mp3");
 footstepAudio.loop = true;
 
-const music = new Audio("/audio/music/background_music.mp3");
+const music = new Audio("audio/music/background_music.mp3");
 music.loop = true;
 music.volume = 0.2;
 

@@ -465,7 +465,7 @@ function handleChoice(type, dialogueKey, choice) {
   // --- Lvl 1 Clue ---
   if (type === "david_quest") {
     if (choice === 1) {
-      audioManager.playSFX("/audio/sfx/item_pickup.mp3", 0.7);
+      audioManager.playSFX("audio/sfx/item_pickup.mp3", 0.7);
       playerInventory.water = 1;
       uiManager.updateInventoryUI(playerInventory);
       uiManager.updateObjective(2, OBJECTIVES[2], totalLevels);
@@ -485,7 +485,7 @@ function handleChoice(type, dialogueKey, choice) {
       // RIGHT CHOICE
       uiActionInProgress = true;
 
-      audioManager.playSFX("/audio/sfx/drink.mp3", 1);
+      audioManager.playSFX("audio/sfx/drink.mp3", 1);
       activeScene.playAnimationFor("martha", "Drinking", THREE.LoopOnce, () => {
         const lexaPosition = { x: 0.3, y: 0, z: -1.4 };
         const character = activeScene.survivorsMap.get("martha");
@@ -497,7 +497,7 @@ function handleChoice(type, dialogueKey, choice) {
           character.model.rotation.y = targetAngle;
         }
 
-        const marthaSteps = new Audio("/audio/sfx/footstep_npc.mp3");
+        const marthaSteps = new Audio("audio/sfx/footstep_npc.mp3");
         marthaSteps.loop = true;
         marthaSteps.volume = 1;
         marthaSteps.play();
@@ -512,7 +512,7 @@ function handleChoice(type, dialogueKey, choice) {
             "CrouchingIdle",
             THREE.LoopRepeat
           );
-          audioManager.playSFX("/audio/sfx/item_pickup.mp3", 0.7);
+          audioManager.playSFX("audio/sfx/item_pickup.mp3", 0.7);
           uiManager.updateInventoryUI(playerInventory);
           uiManager.updateObjective(3, OBJECTIVES[3], totalLevels);
           currentLevel = 3;
@@ -535,7 +535,7 @@ function handleChoice(type, dialogueKey, choice) {
     if (dialogueKey === "axton") {
       // RIGHT CHOICE
       uiActionInProgress = true;
-      audioManager.playSFX("/audio/sfx/eat.mp3", 1);
+      audioManager.playSFX("audio/sfx/eat.mp3", 1);
 
       activeScene.playAnimationFor("axton", "StandingUp", THREE.LoopOnce);
       activeScene.playAnimationFor(
@@ -553,7 +553,7 @@ function handleChoice(type, dialogueKey, choice) {
       activeScene.playAnimationFor("lexa", "Pointing", THREE.LoopRepeat);
 
       setTimeout(() => {
-        audioManager.playSFX("/audio/sfx/door_reveal.mp3", 1);
+        audioManager.playSFX("audio/sfx/door_reveal.mp3", 1);
         activeScene.showDoor();
         uiManager.updateObjective(4, OBJECTIVES[4], totalLevels);
         currentLevel = 4;
@@ -578,7 +578,7 @@ function handleChoice(type, dialogueKey, choice) {
       const newColor = "rgba(50, 255, 50, 1.0)";
 
       activeScene.updateDoorSign(newText, newColor);
-      audioManager.playSFX("/audio/sfx/door_unlock.mp3", 1);
+      audioManager.playSFX("audio/sfx/door_unlock.mp3", 1);
 
       uiActionInProgress = true;
       setTimeout(() => {
@@ -620,7 +620,7 @@ function handleChoice(type, dialogueKey, choice) {
 }
 
 function runBadEnding(title, subtitle) {
-  audioManager.playSFX("/audio/sfx/game_over_fail.mp3", 0.8);
+  audioManager.playSFX("audio/sfx/game_over_fail.mp3", 0.8);
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;
@@ -631,7 +631,7 @@ function runBadEnding(title, subtitle) {
 }
 
 function runGoodEnding(title, subtitle) {
-  audioManager.playSFX("/audio/sfx/game_over_win.mp3", 0.8);
+  audioManager.playSFX("audio/sfx/game_over_win.mp3", 0.8);
   gameInProgress = false;
   moveForward = false;
   moveBackward = false;

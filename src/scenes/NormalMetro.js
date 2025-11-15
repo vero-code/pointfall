@@ -19,8 +19,8 @@ export class NormalMetro {
   
   createEnvironment() {
     // Load textures
-    const floorTexture = this.textureLoader.load('/textures/floor.jpg');
-    const wallTexture = this.textureLoader.load('/textures/wall.jpg');
+    const floorTexture = this.textureLoader.load('textures/floor.jpg');
+    const wallTexture = this.textureLoader.load('textures/wall.jpg');
     
     floorTexture.wrapS = THREE.RepeatWrapping;
     floorTexture.wrapT = THREE.RepeatWrapping;
@@ -140,7 +140,7 @@ export class NormalMetro {
         name: 'gladwin',
         pos: [-1.5, 0.6, -2.5],
         type: 'model',
-        modelPath: '/models/grandpa.glb',
+        modelPath: 'models/grandpa.glb',
         scale: 0.4,
         elderly: true
       },

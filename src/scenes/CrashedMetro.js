@@ -19,7 +19,7 @@ export class CrashedMetro {
     this.doorSign = null;
 
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("/draco/");
+    dracoLoader.setDecoderPath("draco/");
 
     this.gltfLoader = new GLTFLoader();
     this.gltfLoader.setDRACOLoader(dracoLoader);
@@ -147,8 +147,8 @@ export class CrashedMetro {
 
   createEnvironment() {
     // --- Load textures ---
-    const floorTexture = this.textureLoader.load("/textures/floor.jpg");
-    const wallTexture = this.textureLoader.load("/textures/wall.jpg");
+    const floorTexture = this.textureLoader.load("textures/floor.jpg");
+    const wallTexture = this.textureLoader.load("textures/wall.jpg");
 
     // Repeat texture
     floorTexture.wrapS = THREE.RepeatWrapping;
@@ -236,31 +236,31 @@ export class CrashedMetro {
     const animationsToLoad = [
       {
         name: "Drinking",
-        path: "/models/animations/Martha-Suzie-Drinking.glb",
+        path: "models/animations/Martha-Suzie-Drinking.glb",
       },
       {
         name: "Walking",
-        path: "/models/animations/Martha-Suzie-Walking-Inplace.glb",
+        path: "models/animations/Martha-Suzie-Walking-Inplace.glb",
       },
       {
         name: "CrouchingIdle",
-        path: "/models/animations/Martha-Suzie-Crouching-Idle.glb",
+        path: "models/animations/Martha-Suzie-Crouching-Idle.glb",
       },
       {
         name: "StandingUp",
-        path: "/models/animations/Axton-Leonard-Standing-Up.glb",
+        path: "models/animations/Axton-Leonard-Standing-Up.glb",
       },
       {
         name: "Pointing",
-        path: "/models/animations/Lexa-Amy-Kneeling-Pointing.glb",
+        path: "models/animations/Lexa-Amy-Kneeling-Pointing.glb",
       },
       {
         name: "StandingUp_Martha",
-        path: "/models/animations/Martha-Suzie-Standing-Up.glb",
+        path: "models/animations/Martha-Suzie-Standing-Up.glb",
       },
       {
         name: "StandingUp_David",
-        path: "/models/animations/David-Adam-Praying-Stand.glb",
+        path: "models/animations/David-Adam-Praying-Stand.glb",
       },
     ];
 
