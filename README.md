@@ -4,9 +4,22 @@
   <img src="https://img.shields.io/badge/►%20Play%20Now!-on%20itch.io-red?style=for-the-badge&logo=itchdotio" alt="Play on Itch.io">
 </a>
 
+<br>
+
+<p align="center">
+  <em>Click the image below to watch the gameplay trailer:</em><br>
+  <a href="https://youtu.be/0kapGTs3JVE">
+    <img src="https://img.youtube.com/vi/0kapGTs3JVE/maxresdefault.jpg" alt="Watch the Gameplay Trailer" width="100%">
+  </a>
+</p>
+
+<br>
+
 The tunnel collapsed. The survivors are looking at you. The air is thick with dust, and panic is setting in. Can you make the right choices to lead them to safety?
 
-The 3D first-person narrative game created for the [Chroma Awards: AI Film, Music Videos, and Games](https://devpost.com/software/pointfall) hackathon.
+**This 3D first-person narrative game was created for:**
+* [Chroma Awards: AI Film, Music Videos, and Games](https://devpost.com/software/pointfall)
+* [Giving Tuesday 2025 — Submit Your Game, Help a Child](https://itch.io/jam/gt2025)
 
 ### ✨ Features
 
