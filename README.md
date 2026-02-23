@@ -3,6 +3,7 @@
 <a href="https://vero-game.itch.io/pointfall">
   <img src="https://img.shields.io/badge/►%20Play%20Now!-on%20itch.io-red?style=for-the-badge&logo=itchdotio" alt="Play on Itch.io">
 </a>
+<img src="https://img.shields.io/badge/Chroma%20Awards%202025-Top%2010%25%20%F0%9F%8E%96%EF%B8%8F-blueviolet?style=for-the-badge" alt="Honorable Mention">
 
 <br>
 
@@ -18,7 +19,7 @@
 The tunnel collapsed. The survivors are looking at you. The air is thick with dust, and panic is setting in. Can you make the right choices to lead them to safety?
 
 **This 3D first-person narrative game was created for:**
-* [Chroma Awards: AI Film, Music Videos, and Games](https://devpost.com/software/pointfall)
+* [Chroma Awards: AI Film, Music Videos, and Games](https://devpost.com/software/pointfall) — 🎖️ **Honorable Mention** in Games: Interactive Narrative — Top 10% out of 6,649 submissions
 * [Giving Tuesday 2025 — Submit Your Game, Help a Child](https://itch.io/jam/gt2025)
 
 ### ✨ Features
